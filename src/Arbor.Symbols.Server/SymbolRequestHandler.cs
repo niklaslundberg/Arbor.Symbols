@@ -64,10 +64,14 @@ public sealed class SymbolRequestHandler
 
     private async Task<bool> TryGenerateAndStorePdbAsync(SymbolResourceRequest request, CancellationToken cancellationToken)
     {
+        _logger.LogDebug("Attempting ILSpy PDB generation for {RelativePath} across {DirectoryCount} search director(ies)",
+            request.RelativePath, _options.AssemblySearchDirectories.Length);
+
         foreach (var directory in _options.AssemblySearchDirectories)
         {
             if (!Directory.Exists(directory))
             {
+                _logger.LogDebug("Assembly search directory does not exist, skipping: {Directory}", directory);
                 continue;
             }
 
@@ -82,16 +86,27 @@ public sealed class SymbolRequestHandler
                     continue;
                 }
 
+                _logger.LogDebug("Found candidate assembly {CandidatePath}, checking identifier match", candidateAssemblyPath);
+
                 if (!SymbolResourcePathHelper.TryCreateAssociatedPdbRequest(candidateAssemblyPath, out var pdbRequest))
                 {
+                    _logger.LogDebug("Could not read PDB identifier from {CandidatePath}, skipping", candidateAssemblyPath);
                     continue;
                 }
 
                 if (!string.Equals(pdbRequest.Identifier, request.Identifier, StringComparison.OrdinalIgnoreCase) ||
                     !string.Equals(pdbRequest.RequestedFileName, request.RequestedFileName, StringComparison.OrdinalIgnoreCase))
                 {
+                    _logger.LogDebug(
+                        "Identifier mismatch for {CandidatePath}: expected {ExpectedId}/{ExpectedName}, found {ActualId}/{ActualName}",
+                        candidateAssemblyPath,
+                        request.Identifier, request.RequestedFileName,
+                        pdbRequest.Identifier, pdbRequest.RequestedFileName);
                     continue;
                 }
+
+                _logger.LogInformation("Matched assembly {CandidatePath} for {RelativePath}, generating PDB via ILSpy",
+                    candidateAssemblyPath, request.RelativePath);
 
                 var destinationPath = _storage.GetPath(request);
                 var generated = await _ilSpySymbolGenerator.TryGeneratePdbAsync(candidateAssemblyPath, destinationPath, cancellationToken);
@@ -99,9 +114,12 @@ public sealed class SymbolRequestHandler
                 {
                     return true;
                 }
+
+                _logger.LogWarning("ILSpy PDB generation failed for {CandidatePath}", candidateAssemblyPath);
             }
         }
 
+        _logger.LogDebug("No matching assembly found for ILSpy PDB generation of {RelativePath}", request.RelativePath);
         return false;
     }
 

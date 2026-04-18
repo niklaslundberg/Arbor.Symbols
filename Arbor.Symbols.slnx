@@ -6,6 +6,7 @@
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Arbor.Symbols.IntegrationTests/Arbor.Symbols.IntegrationTests.csproj" />
+    <Project Path="tests/Arbor.Symbols.SystemTests/Arbor.Symbols.SystemTests.csproj" />
     <Project Path="tests/Arbor.Symbols.UnitTests/Arbor.Symbols.UnitTests.csproj" />
   </Folder>
 </Solution>
