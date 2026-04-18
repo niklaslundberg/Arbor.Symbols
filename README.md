@@ -38,7 +38,7 @@ For incoming symbol requests:
 ### Run
 
 ```bash
-dotnet run --project /home/runner/work/Arbor.Symbols/Arbor.Symbols/src/Arbor.Symbols.Server/Arbor.Symbols.Server.csproj
+dotnet run --project src/Arbor.Symbols.Server/Arbor.Symbols.Server.csproj
 ```
 
 Configure in `appsettings.json` (`SymbolServer` section).
@@ -57,7 +57,7 @@ Default symbol-cache location:
 ### Run
 
 ```bash
-dotnet run --project /home/runner/work/Arbor.Symbols/Arbor.Symbols/src/Arbor.Symbols.ConsoleClient/Arbor.Symbols.ConsoleClient.csproj -- \
+dotnet run --project src/Arbor.Symbols.ConsoleClient/Arbor.Symbols.ConsoleClient.csproj -- \
   /path/to/scan \
   --server http://localhost:5000 \
   --symbol-cache /path/to/symbol-cache
@@ -68,6 +68,6 @@ The client logs download status using Serilog.
 ## Build and test
 
 ```bash
-dotnet build /home/runner/work/Arbor.Symbols/Arbor.Symbols/Arbor.Symbols.slnx
-dotnet test /home/runner/work/Arbor.Symbols/Arbor.Symbols/Arbor.Symbols.slnx
+dotnet build Arbor.Symbols.slnx
+dotnet test Arbor.Symbols.slnx
 ```
