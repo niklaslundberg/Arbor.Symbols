@@ -11,10 +11,10 @@ public class SymbolResourcePathHelperTests
 
         var result = SymbolResourcePathHelper.TryCreateAssemblyRequest(assemblyPath, out var request);
 
-        Assert.True(result);
-        Assert.Equal(Path.GetFileName(assemblyPath), request.RequestedFileName);
-        Assert.Equal(request.RequestedFileName, request.ResourceFileName);
-        Assert.NotEmpty(request.Identifier);
+        result.Should().BeTrue();
+        request.RequestedFileName.Should().Be(Path.GetFileName(assemblyPath));
+        request.ResourceFileName.Should().Be(request.RequestedFileName);
+        request.Identifier.Should().NotBeEmpty();
     }
 
     [Fact]
@@ -25,6 +25,6 @@ public class SymbolResourcePathHelperTests
 
         var path = SymbolResourcePathHelper.GetCachePath(root, request);
 
-        Assert.StartsWith(Path.GetFullPath(root), Path.GetFullPath(path), StringComparison.OrdinalIgnoreCase);
+        Path.GetFullPath(path).Should().StartWithEquivalentOf(Path.GetFullPath(root));
     }
 }

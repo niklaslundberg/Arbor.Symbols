@@ -18,15 +18,15 @@ public class SymbolEndpointTests
         using var client = factory.CreateClient();
 
         var request = new SymbolResourceRequest("my.pdb", "ABCDEF", "my.pdb");
-        var response = await client.GetAsync($"/{request.RelativePath}");
+        var response = await client.GetAsync($"/{request.RelativePath}", TestContext.Current.CancellationToken);
 
         response.EnsureSuccessStatusCode();
-        var content = await response.Content.ReadAsStringAsync();
+        var content = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
-        Assert.Equal("from-official", content);
+        content.Should().Be("from-official");
 
         var cachePath = SymbolResourcePathHelper.GetCachePath(cacheRoot, request);
-        Assert.True(File.Exists(cachePath));
+        File.Exists(cachePath).Should().BeTrue();
     }
 
     private sealed class TestWebApplicationFactory(string cacheDirectory) : WebApplicationFactory<Program>
