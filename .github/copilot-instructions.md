@@ -64,7 +64,7 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 
 **Never commit code that breaks the test suite.**
 
-- Run `dotnet test Arbor.HttpClient.slnx` and confirm it exits with no failures before every commit.
+- Run `dotnet test Arbor.Symbols.slnx` and confirm it exits with no failures before every commit.
 - A pre-commit Git hook is available to automate this check. Set it up once after cloning:
   ```
   ./scripts/install-hooks.sh
