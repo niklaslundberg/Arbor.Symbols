@@ -1,0 +1,27 @@
+artifacts/
+
+# Build output
+**/bin/
+**/obj/
+
+# Visual Studio
+**/.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# ReSharper / Rider / JetBrains
+**/.idea/
+**/.fleet/
+_ReSharper*/
+*.DotSettings.user
+*.rsuser
+
+# NCrunch
+.ncrunch/
+_NCrunch_*
+*.ncrunch*
+
+# Visual Studio Code
+**/.vscode/
