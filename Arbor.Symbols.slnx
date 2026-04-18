@@ -1,0 +1,12 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Arbor.Symbols.ConsoleClient/Arbor.Symbols.ConsoleClient.csproj" />
+    <Project Path="src/Arbor.Symbols.Core/Arbor.Symbols.Core.csproj" />
+    <Project Path="src/Arbor.Symbols.Server/Arbor.Symbols.Server.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Arbor.Symbols.IntegrationTests/Arbor.Symbols.IntegrationTests.csproj" />
+    <Project Path="tests/Arbor.Symbols.SystemTests/Arbor.Symbols.SystemTests.csproj" />
+    <Project Path="tests/Arbor.Symbols.UnitTests/Arbor.Symbols.UnitTests.csproj" />
+  </Folder>
+</Solution>
