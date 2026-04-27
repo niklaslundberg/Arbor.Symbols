@@ -29,10 +29,18 @@ builder.Services.AddHttpClient<IOfficialSymbolClient, OfficialSymbolClient>((ser
 });
 
 builder.Services.AddSingleton<SymbolRequestHandler>();
+builder.Services.AddSingleton<SymbolServerStatistics>();
 
 var app = builder.Build();
 
 app.MapGet("/", () => Results.Ok(new { name = "Arbor.Symbols.Server", status = "ok" }));
+
+app.MapGet("/ui", (SymbolServerStatistics statistics, SymbolStorage storage)
+    => UiEndpoints.Dashboard(statistics, storage));
+
+app.MapDelete("/ui/cache/{requestedFileName}/{identifier}/{resourceFileName}",
+    (string requestedFileName, string identifier, string resourceFileName, SymbolStorage storage)
+        => UiEndpoints.DeleteCacheEntry(requestedFileName, identifier, resourceFileName, storage));
 
 app.MapGet("/{requestedFileName}/{identifier}/{resourceFileName}",
     (string requestedFileName, string identifier, string resourceFileName, SymbolRequestHandler handler, CancellationToken cancellationToken)

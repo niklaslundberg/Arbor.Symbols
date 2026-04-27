@@ -10,19 +10,22 @@ public sealed class SymbolRequestHandler
     private readonly IIlSpySymbolGenerator _ilSpySymbolGenerator;
     private readonly SymbolServerOptions _options;
     private readonly ILogger<SymbolRequestHandler> _logger;
+    private readonly SymbolServerStatistics _statistics;
 
     public SymbolRequestHandler(
         SymbolStorage storage,
         IOfficialSymbolClient officialSymbolClient,
         IIlSpySymbolGenerator ilSpySymbolGenerator,
         IOptions<SymbolServerOptions> options,
-        ILogger<SymbolRequestHandler> logger)
+        ILogger<SymbolRequestHandler> logger,
+        SymbolServerStatistics statistics)
     {
         _storage = storage;
         _officialSymbolClient = officialSymbolClient;
         _ilSpySymbolGenerator = ilSpySymbolGenerator;
         _options = options.Value;
         _logger = logger;
+        _statistics = statistics;
     }
 
     public async Task<IResult> HandleAsync(string requestedFileName, string identifier, string resourceFileName, CancellationToken cancellationToken)
@@ -32,6 +35,7 @@ public sealed class SymbolRequestHandler
         if (_storage.TryOpenRead(request, out var cachedStream))
         {
             _logger.LogInformation("Serving cached symbol {RelativePath}", request.RelativePath);
+            _statistics.RecordCacheHit();
             return Results.Stream(cachedStream, GetContentType(resourceFileName));
         }
 
@@ -45,6 +49,7 @@ public sealed class SymbolRequestHandler
             await _storage.SaveAsync(request, copySource, cancellationToken);
 
             _logger.LogInformation("Downloaded symbol from Microsoft symbol server {RelativePath}", request.RelativePath);
+            _statistics.RecordOfficialDownload();
             return Results.File(bytes, GetContentType(resourceFileName));
         }
 
@@ -54,11 +59,13 @@ public sealed class SymbolRequestHandler
             if (_storage.TryOpenRead(request, out var generatedPdbStream))
             {
                 _logger.LogInformation("Generated symbol using ILSpy {RelativePath}", request.RelativePath);
+                _statistics.RecordIlSpyGeneration();
                 return Results.Stream(generatedPdbStream, GetContentType(resourceFileName));
             }
         }
 
         _logger.LogWarning("Symbol request not found {RelativePath}", request.RelativePath);
+        _statistics.RecordNotFound();
         return Results.NotFound();
     }
 
