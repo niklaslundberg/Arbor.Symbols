@@ -147,9 +147,10 @@ public class UiEndpointTests
                 {
                     Directory.Delete(cacheDirectory, recursive: true);
                 }
-                catch (IOException)
+                catch (IOException ex)
                 {
-                    // best-effort cleanup
+                    // Best-effort cleanup: log to debug output so CI logs capture it if cleanup fails.
+                    System.Diagnostics.Debug.WriteLine($"Failed to clean up test cache directory '{cacheDirectory}': {ex.Message}");
                 }
             }
         }

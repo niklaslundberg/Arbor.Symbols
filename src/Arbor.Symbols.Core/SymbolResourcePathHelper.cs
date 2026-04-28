@@ -106,12 +106,13 @@ public static class SymbolResourcePathHelper
         }
     }
 
+    private static readonly char[] PathSeparators = [Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar];
+
     public static string GetCachePath(string cacheRootDirectory, SymbolResourceRequest request)
     {
-        char[] pathSeparators = [Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar];
-        if (request.RequestedFileName.IndexOfAny(pathSeparators) >= 0 ||
-            request.Identifier.IndexOfAny(pathSeparators) >= 0 ||
-            request.ResourceFileName.IndexOfAny(pathSeparators) >= 0)
+        if (request.RequestedFileName.IndexOfAny(PathSeparators) >= 0 ||
+            request.Identifier.IndexOfAny(PathSeparators) >= 0 ||
+            request.ResourceFileName.IndexOfAny(PathSeparators) >= 0)
         {
             throw new InvalidOperationException("Symbol request components must not contain path separators.");
         }

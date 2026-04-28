@@ -35,6 +35,8 @@ var app = builder.Build();
 
 app.MapGet("/", () => Results.Ok(new { name = "Arbor.Symbols.Server", status = "ok" }));
 
+// UI endpoints are restricted to loopback (localhost / 127.0.0.1).
+// Note: RequireHost in .NET 10 does not support IPv6 address literals, so [::1] is not covered.
 var uiEndpoints = app.MapGroup("/ui").RequireHost("localhost", "127.0.0.1");
 
 uiEndpoints.MapGet("", (SymbolServerStatistics statistics, SymbolStorage storage)
