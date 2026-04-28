@@ -35,10 +35,12 @@ var app = builder.Build();
 
 app.MapGet("/", () => Results.Ok(new { name = "Arbor.Symbols.Server", status = "ok" }));
 
-app.MapGet("/ui", (SymbolServerStatistics statistics, SymbolStorage storage)
+var uiEndpoints = app.MapGroup("/ui").RequireHost("localhost", "127.0.0.1");
+
+uiEndpoints.MapGet("", (SymbolServerStatistics statistics, SymbolStorage storage)
     => UiEndpoints.Dashboard(statistics, storage));
 
-app.MapDelete("/ui/cache/{requestedFileName}/{identifier}/{resourceFileName}",
+uiEndpoints.MapDelete("/cache/{requestedFileName}/{identifier}/{resourceFileName}",
     (string requestedFileName, string identifier, string resourceFileName, SymbolStorage storage)
         => UiEndpoints.DeleteCacheEntry(requestedFileName, identifier, resourceFileName, storage));
 

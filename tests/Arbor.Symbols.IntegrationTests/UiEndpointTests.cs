@@ -136,6 +136,23 @@ public class UiEndpointTests
                 services.AddSingleton<IOfficialSymbolClient, FakeOfficialSymbolClient>();
             });
         }
+
+        public override async ValueTask DisposeAsync()
+        {
+            await base.DisposeAsync();
+
+            if (Directory.Exists(cacheDirectory))
+            {
+                try
+                {
+                    Directory.Delete(cacheDirectory, recursive: true);
+                }
+                catch (IOException)
+                {
+                    // best-effort cleanup
+                }
+            }
+        }
     }
 
     private sealed class FakeOfficialSymbolClient : IOfficialSymbolClient

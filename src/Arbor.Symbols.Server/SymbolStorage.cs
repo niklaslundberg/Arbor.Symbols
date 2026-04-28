@@ -84,25 +84,54 @@ public sealed class SymbolStorage
     public bool TryDelete(SymbolResourceRequest request)
     {
         var path = GetPath(request);
+
         if (!File.Exists(path))
         {
             return false;
         }
 
-        File.Delete(path);
+        try
+        {
+            File.Delete(path);
+        }
+        catch (IOException)
+        {
+            return false;
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return false;
+        }
 
         var identifierDir = Path.GetDirectoryName(path)!;
-        if (Directory.Exists(identifierDir) && Directory.GetFileSystemEntries(identifierDir).Length == 0)
+        if (TryDeleteEmptyDirectory(identifierDir))
         {
-            Directory.Delete(identifierDir);
-
             var fileNameDir = Path.GetDirectoryName(identifierDir)!;
-            if (Directory.Exists(fileNameDir) && Directory.GetFileSystemEntries(fileNameDir).Length == 0)
-            {
-                Directory.Delete(fileNameDir);
-            }
+            TryDeleteEmptyDirectory(fileNameDir);
         }
 
         return true;
+    }
+
+    private static bool TryDeleteEmptyDirectory(string path)
+    {
+        try
+        {
+            if (!Directory.Exists(path) || Directory.GetFileSystemEntries(path).Length != 0)
+            {
+                return false;
+            }
+
+            Directory.Delete(path);
+            return true;
+        }
+        catch (IOException)
+        {
+            return false;
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return false;
+        }
     }
 }

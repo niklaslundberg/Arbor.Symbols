@@ -16,10 +16,10 @@ public static class UiEndpoints
             var escapedIdentifier = System.Text.Json.JsonSerializer.Serialize(entry.Identifier);
             var escapedResourceFileName = System.Text.Json.JsonSerializer.Serialize(entry.ResourceFileName);
             rows.Append($"""
-                <tr class="cache-row" data-name="{System.Web.HttpUtility.HtmlEncode(entry.RequestedFileName.ToLowerInvariant())}">
-                  <td>{System.Web.HttpUtility.HtmlEncode(entry.RequestedFileName)}</td>
-                  <td class="mono">{System.Web.HttpUtility.HtmlEncode(entry.Identifier)}</td>
-                  <td>{System.Web.HttpUtility.HtmlEncode(entry.ResourceFileName)}</td>
+                <tr class="cache-row" data-name="{System.Net.WebUtility.HtmlEncode(entry.RequestedFileName.ToLowerInvariant())}">
+                  <td>{System.Net.WebUtility.HtmlEncode(entry.RequestedFileName)}</td>
+                  <td class="mono">{System.Net.WebUtility.HtmlEncode(entry.Identifier)}</td>
+                  <td>{System.Net.WebUtility.HtmlEncode(entry.ResourceFileName)}</td>
                   <td class="right">{FormatBytes(entry.SizeBytes)}</td>
                   <td class="right">{entry.LastModifiedUtc:yyyy-MM-dd HH:mm:ss} UTC</td>
                   <td class="center">
