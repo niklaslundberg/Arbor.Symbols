@@ -1,8 +1,10 @@
 <Solution>
   <Folder Name="/src/">
+    <Project Path="src/Arbor.Symbols.AppHost/Arbor.Symbols.AppHost.csproj" />
     <Project Path="src/Arbor.Symbols.ConsoleClient/Arbor.Symbols.ConsoleClient.csproj" />
     <Project Path="src/Arbor.Symbols.Core/Arbor.Symbols.Core.csproj" />
     <Project Path="src/Arbor.Symbols.Server/Arbor.Symbols.Server.csproj" />
+    <Project Path="src/Arbor.Symbols.ServiceDefaults/Arbor.Symbols.ServiceDefaults.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Arbor.Symbols.IntegrationTests/Arbor.Symbols.IntegrationTests.csproj" />
