@@ -152,6 +152,10 @@ public class UiEndpointTests
                     // Best-effort cleanup: log to debug output so CI logs capture it if cleanup fails.
                     System.Diagnostics.Debug.WriteLine($"Failed to clean up test cache directory '{cacheDirectory}': {ex.Message}");
                 }
+                catch (UnauthorizedAccessException ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Failed to clean up test cache directory '{cacheDirectory}': {ex.Message}");
+                }
             }
         }
     }

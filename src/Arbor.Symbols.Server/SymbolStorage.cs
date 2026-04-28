@@ -49,22 +49,43 @@ public sealed class SymbolStorage
         }
 
         var entries = new List<CachedSymbolEntry>();
-        foreach (var fileNameDir in Directory.EnumerateDirectories(cacheDir))
+        try
         {
-            foreach (var identifierDir in Directory.EnumerateDirectories(fileNameDir))
+            foreach (var fileNameDir in Directory.EnumerateDirectories(cacheDir))
             {
-                foreach (var filePath in Directory.EnumerateFiles(identifierDir))
+                try
                 {
-                    var info = new FileInfo(filePath);
-                    entries.Add(new CachedSymbolEntry(
-                        Path.GetFileName(fileNameDir),
-                        Path.GetFileName(identifierDir),
-                        Path.GetFileName(filePath),
-                        info.Length,
-                        info.LastWriteTimeUtc));
+                    foreach (var identifierDir in Directory.EnumerateDirectories(fileNameDir))
+                    {
+                        try
+                        {
+                            foreach (var filePath in Directory.EnumerateFiles(identifierDir))
+                            {
+                                try
+                                {
+                                    var info = new FileInfo(filePath);
+                                    entries.Add(new CachedSymbolEntry(
+                                        Path.GetFileName(fileNameDir),
+                                        Path.GetFileName(identifierDir),
+                                        Path.GetFileName(filePath),
+                                        info.Length,
+                                        info.LastWriteTimeUtc));
+                                }
+                                catch (FileNotFoundException) { }
+                                catch (IOException) { }
+                                catch (UnauthorizedAccessException) { }
+                            }
+                        }
+                        catch (IOException) { }
+                        catch (UnauthorizedAccessException) { }
+                    }
                 }
+                catch (IOException) { }
+                catch (UnauthorizedAccessException) { }
             }
         }
+        catch (IOException) { }
+        catch (UnauthorizedAccessException) { }
 
         return entries;
     }
@@ -77,8 +98,19 @@ public sealed class SymbolStorage
             return 0;
         }
 
-        return Directory.EnumerateFiles(cacheDir, "*", SearchOption.AllDirectories)
-            .Sum(f => new FileInfo(f).Length);
+        long total = 0;
+        foreach (var f in Directory.EnumerateFiles(cacheDir, "*", SearchOption.AllDirectories))
+        {
+            try
+            {
+                total += new FileInfo(f).Length;
+            }
+            catch (FileNotFoundException) { }
+            catch (IOException) { }
+            catch (UnauthorizedAccessException) { }
+        }
+
+        return total;
     }
 
     public bool TryDelete(SymbolResourceRequest request)

@@ -6,15 +6,12 @@ public static class UiEndpoints
 {
     public static IResult Dashboard(SymbolServerStatistics statistics, SymbolStorage storage)
     {
-        var diskBytes = storage.GetDiskUsageBytes();
-        var cached = storage.GetCachedSymbols();
+        var cached = storage.GetCachedSymbols().OrderByDescending(e => e.LastModifiedUtc).ToArray();
+        var diskBytes = cached.Sum(e => e.SizeBytes);
 
         var rows = new System.Text.StringBuilder();
-        foreach (var entry in cached.OrderByDescending(e => e.LastModifiedUtc))
+        foreach (var entry in cached)
         {
-            var escapedFileName = System.Text.Json.JsonSerializer.Serialize(entry.RequestedFileName);
-            var escapedIdentifier = System.Text.Json.JsonSerializer.Serialize(entry.Identifier);
-            var escapedResourceFileName = System.Text.Json.JsonSerializer.Serialize(entry.ResourceFileName);
             rows.Append($"""
                 <tr class="cache-row" data-name="{System.Net.WebUtility.HtmlEncode(entry.RequestedFileName.ToLowerInvariant())}">
                   <td>{System.Net.WebUtility.HtmlEncode(entry.RequestedFileName)}</td>
@@ -23,7 +20,10 @@ public static class UiEndpoints
                   <td class="right">{FormatBytes(entry.SizeBytes)}</td>
                   <td class="right">{entry.LastModifiedUtc:yyyy-MM-dd HH:mm:ss} UTC</td>
                   <td class="center">
-                    <button class="btn-delete" onclick="deleteEntry({escapedFileName},{escapedIdentifier},{escapedResourceFileName},this)">Delete</button>
+                    <button class="btn-delete"
+                      data-filename="{System.Net.WebUtility.HtmlEncode(entry.RequestedFileName)}"
+                      data-identifier="{System.Net.WebUtility.HtmlEncode(entry.Identifier)}"
+                      data-resource="{System.Net.WebUtility.HtmlEncode(entry.ResourceFileName)}">Delete</button>
                   </td>
                 </tr>
                 """);
@@ -84,7 +84,7 @@ public static class UiEndpoints
                 <div class="section">
                   <h2>Disk Usage</h2>
                   <div class="disk">{{FormatBytes(diskBytes)}}</div>
-                  <div class="disk-label">{{cached.Count}} cached symbol(s)</div>
+                  <div class="disk-label">{{cached.Length}} cached symbol(s)</div>
                 </div>
 
                 <div class="section">
@@ -102,7 +102,7 @@ public static class UiEndpoints
                       </tr>
                     </thead>
                     <tbody id="cache-body">
-                      {{(cached.Count == 0 ? "<tr><td colspan=\"6\" class=\"empty\">No cached symbols</td></tr>" : rows.ToString())}}
+                      {{(cached.Length == 0 ? "<tr><td colspan=\"6\" class=\"empty\">No cached symbols</td></tr>" : rows.ToString())}}
                     </tbody>
                   </table>
                 </div>
@@ -115,7 +115,10 @@ public static class UiEndpoints
                   });
                 }
 
-                async function deleteEntry(fileName, identifier, resourceFileName, btn) {
+                async function deleteEntry(btn) {
+                  const fileName = btn.dataset.filename;
+                  const identifier = btn.dataset.identifier;
+                  const resourceFileName = btn.dataset.resource;
                   if (!confirm('Delete ' + fileName + '/' + identifier + '/' + resourceFileName + '?')) return;
                   btn.disabled = true;
                   const url = '/ui/cache/' + encodeURIComponent(fileName) + '/' + encodeURIComponent(identifier) + '/' + encodeURIComponent(resourceFileName);
