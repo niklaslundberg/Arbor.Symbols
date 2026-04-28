@@ -108,10 +108,10 @@ public class UiEndpointTests
         var html = await uiResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
         // Total requests = 2, cache hits = 1, downloads = 1
-        html.Should().Contain("<div class=\"value\">2</div>");
-        html.Should().Contain("Total Requests");
-        html.Should().Contain("Cache Hits");
-        html.Should().Contain("Downloaded");
+        // Use targeted patterns that include surrounding context from the dashboard HTML
+        html.Should().MatchRegex(@"<div class=""value"">2</div>\s*<div class=""label"">Total Requests</div>");
+        html.Should().MatchRegex(@"<div class=""value"">1</div>\s*<div class=""label"">Cache Hits</div>");
+        html.Should().MatchRegex(@"<div class=""value"">1</div>\s*<div class=""label"">Downloaded</div>");
     }
 
     private sealed class UiTestWebApplicationFactory(string cacheDirectory) : WebApplicationFactory<Program>
@@ -124,18 +124,14 @@ public class UiEndpointTests
                 services.RemoveAll<SymbolStorage>();
                 services.RemoveAll<IOptions<SymbolServerOptions>>();
 
-                services.AddSingleton<IOptions<SymbolServerOptions>>(
-                    new OptionsWrapper<SymbolServerOptions>(new SymbolServerOptions
-                    {
-                        CacheDirectory = cacheDirectory,
-                        AssemblySearchDirectories = []
-                    }));
-
-                services.AddSingleton<SymbolStorage>(new SymbolStorage(new SymbolServerOptions
+                var options = new SymbolServerOptions
                 {
                     CacheDirectory = cacheDirectory,
                     AssemblySearchDirectories = []
-                }));
+                };
+
+                services.AddSingleton<IOptions<SymbolServerOptions>>(new OptionsWrapper<SymbolServerOptions>(options));
+                services.AddSingleton(new SymbolStorage(options));
 
                 services.AddSingleton<IOfficialSymbolClient, FakeOfficialSymbolClient>();
             });

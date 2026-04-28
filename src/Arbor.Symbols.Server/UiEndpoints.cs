@@ -16,7 +16,7 @@ public static class UiEndpoints
             var escapedIdentifier = System.Text.Json.JsonSerializer.Serialize(entry.Identifier);
             var escapedResourceFileName = System.Text.Json.JsonSerializer.Serialize(entry.ResourceFileName);
             rows.Append($"""
-                <tr class="cache-row" data-name="{System.Web.HttpUtility.HtmlEncode(entry.RequestedFileName).ToLowerInvariant()}">
+                <tr class="cache-row" data-name="{System.Web.HttpUtility.HtmlEncode(entry.RequestedFileName.ToLowerInvariant())}">
                   <td>{System.Web.HttpUtility.HtmlEncode(entry.RequestedFileName)}</td>
                   <td class="mono">{System.Web.HttpUtility.HtmlEncode(entry.Identifier)}</td>
                   <td>{System.Web.HttpUtility.HtmlEncode(entry.ResourceFileName)}</td>

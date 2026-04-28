@@ -49,11 +49,11 @@ public sealed class SymbolStorage
         }
 
         var entries = new List<CachedSymbolEntry>();
-        foreach (var fileNameDir in Directory.GetDirectories(cacheDir))
+        foreach (var fileNameDir in Directory.EnumerateDirectories(cacheDir))
         {
-            foreach (var identifierDir in Directory.GetDirectories(fileNameDir))
+            foreach (var identifierDir in Directory.EnumerateDirectories(fileNameDir))
             {
-                foreach (var filePath in Directory.GetFiles(identifierDir))
+                foreach (var filePath in Directory.EnumerateFiles(identifierDir))
                 {
                     var info = new FileInfo(filePath);
                     entries.Add(new CachedSymbolEntry(
@@ -77,7 +77,7 @@ public sealed class SymbolStorage
             return 0;
         }
 
-        return Directory.GetFiles(cacheDir, "*", SearchOption.AllDirectories)
+        return Directory.EnumerateFiles(cacheDir, "*", SearchOption.AllDirectories)
             .Sum(f => new FileInfo(f).Length);
     }
 
