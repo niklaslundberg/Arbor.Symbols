@@ -106,15 +106,25 @@ public static class SymbolResourcePathHelper
         }
     }
 
+    private static readonly char[] PathSeparators = [Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar];
+
     public static string GetCachePath(string cacheRootDirectory, SymbolResourceRequest request)
     {
+        if (request.RequestedFileName.IndexOfAny(PathSeparators) >= 0 ||
+            request.Identifier.IndexOfAny(PathSeparators) >= 0 ||
+            request.ResourceFileName.IndexOfAny(PathSeparators) >= 0)
+        {
+            throw new InvalidOperationException("Symbol request components must not contain path separators.");
+        }
+
         Directory.CreateDirectory(cacheRootDirectory);
 
         var fullRoot = Path.GetFullPath(cacheRootDirectory);
         var combinedPath = Path.Combine(cacheRootDirectory, request.RequestedFileName, request.Identifier, request.ResourceFileName);
         var fullPath = Path.GetFullPath(combinedPath);
 
-        if (!fullPath.StartsWith(fullRoot, StringComparison.OrdinalIgnoreCase))
+        var rootWithSeparator = fullRoot.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar) + Path.DirectorySeparatorChar;
+        if (!fullPath.StartsWith(rootWithSeparator, StringComparison.OrdinalIgnoreCase))
         {
             throw new InvalidOperationException("Resolved symbol cache path escaped cache root.");
         }
