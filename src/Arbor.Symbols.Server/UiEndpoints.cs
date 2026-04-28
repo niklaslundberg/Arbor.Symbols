@@ -23,7 +23,8 @@ public static class UiEndpoints
                     <button class="btn-delete"
                       data-filename="{System.Net.WebUtility.HtmlEncode(entry.RequestedFileName)}"
                       data-identifier="{System.Net.WebUtility.HtmlEncode(entry.Identifier)}"
-                      data-resource="{System.Net.WebUtility.HtmlEncode(entry.ResourceFileName)}">Delete</button>
+                      data-resource="{System.Net.WebUtility.HtmlEncode(entry.ResourceFileName)}"
+                      onclick="deleteEntry(this)">Delete</button>
                   </td>
                 </tr>
                 """);
