@@ -87,6 +87,33 @@ public class UiEndpointTests
         deleteResponse.StatusCode.Should().Be(System.Net.HttpStatusCode.NotFound);
     }
 
+    [Fact]
+    public async Task DashboardEndpoint_ReflectsStatisticsAfterRequests()
+    {
+        var cacheRoot = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
+
+        await using var factory = new UiTestWebApplicationFactory(cacheRoot);
+        using var client = factory.CreateClient();
+
+        // First request: downloaded from official (cache miss)
+        var request = new SymbolResourceRequest("my.pdb", "ABCDEF1234", "my.pdb");
+        await client.GetAsync($"/{request.RelativePath}", TestContext.Current.CancellationToken);
+
+        // Second request: served from cache (cache hit)
+        await client.GetAsync($"/{request.RelativePath}", TestContext.Current.CancellationToken);
+
+        var uiResponse = await client.GetAsync("/ui", TestContext.Current.CancellationToken);
+        uiResponse.EnsureSuccessStatusCode();
+
+        var html = await uiResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        // Total requests = 2, cache hits = 1, downloads = 1
+        html.Should().Contain("<div class=\"value\">2</div>");
+        html.Should().Contain("Total Requests");
+        html.Should().Contain("Cache Hits");
+        html.Should().Contain("Downloaded");
+    }
+
     private sealed class UiTestWebApplicationFactory(string cacheDirectory) : WebApplicationFactory<Program>
     {
         protected override void ConfigureWebHost(Microsoft.AspNetCore.Hosting.IWebHostBuilder builder)

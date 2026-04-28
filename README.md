@@ -34,6 +34,8 @@ For incoming symbol requests:
 - `GET /{requestedFileName}/{identifier}/{resourceFileName}`
 - `GET /symbols/{requestedFileName}/{identifier}/{resourceFileName}`
 - `GET /` (health/status)
+- `GET /ui` (web dashboard: statistics, disk usage, cached symbol browser)
+- `DELETE /ui/cache/{requestedFileName}/{identifier}/{resourceFileName}` (delete a cached symbol entry)
 
 ### Run
 
