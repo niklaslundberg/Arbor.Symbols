@@ -128,3 +128,102 @@ This file contains license and attribution notices for third-party packages used
 **Project URL:** https://github.com/xunit/visualstudio.xunit
 **License:** Apache-2.0
 **Note:** Test-only dependency; not redistributed.
+
+---
+
+## Aspire.AppHost.Sdk
+
+**Package:** Aspire.AppHost.Sdk
+**Version:** 13.2.4
+**Authors:** Microsoft
+**Copyright:** Copyright © Microsoft Corporation. All rights reserved.
+**Project URL:** https://github.com/dotnet/aspire
+**License:** MIT
+
+---
+
+## Aspire.Hosting.AppHost
+
+**Package:** Aspire.Hosting.AppHost
+**Version:** 13.2.4
+**Authors:** Microsoft
+**Copyright:** Copyright © Microsoft Corporation. All rights reserved.
+**Project URL:** https://github.com/dotnet/aspire
+**License:** MIT
+
+---
+
+## Microsoft.Extensions.Http.Resilience
+
+**Package:** Microsoft.Extensions.Http.Resilience
+**Version:** 10.5.0
+**Authors:** Microsoft
+**Copyright:** Copyright © Microsoft Corporation. All rights reserved.
+**Project URL:** https://github.com/dotnet/extensions
+**License:** MIT
+
+---
+
+## Microsoft.Extensions.ServiceDiscovery
+
+**Package:** Microsoft.Extensions.ServiceDiscovery
+**Version:** 10.5.0
+**Authors:** Microsoft
+**Copyright:** Copyright © Microsoft Corporation. All rights reserved.
+**Project URL:** https://github.com/dotnet/extensions
+**License:** MIT
+
+---
+
+## OpenTelemetry.Exporter.OpenTelemetryProtocol
+
+**Package:** OpenTelemetry.Exporter.OpenTelemetryProtocol
+**Version:** 1.15.3
+**Authors:** OpenTelemetry Authors
+**Copyright:** Copyright © OpenTelemetry Authors
+**Project URL:** https://github.com/open-telemetry/opentelemetry-dotnet
+**License:** Apache-2.0
+
+---
+
+## OpenTelemetry.Extensions.Hosting
+
+**Package:** OpenTelemetry.Extensions.Hosting
+**Version:** 1.15.3
+**Authors:** OpenTelemetry Authors
+**Copyright:** Copyright © OpenTelemetry Authors
+**Project URL:** https://github.com/open-telemetry/opentelemetry-dotnet
+**License:** Apache-2.0
+
+---
+
+## OpenTelemetry.Instrumentation.AspNetCore
+
+**Package:** OpenTelemetry.Instrumentation.AspNetCore
+**Version:** 1.15.2
+**Authors:** OpenTelemetry Authors
+**Copyright:** Copyright © OpenTelemetry Authors
+**Project URL:** https://github.com/open-telemetry/opentelemetry-dotnet
+**License:** Apache-2.0
+
+---
+
+## OpenTelemetry.Instrumentation.Http
+
+**Package:** OpenTelemetry.Instrumentation.Http
+**Version:** 1.15.1
+**Authors:** OpenTelemetry Authors
+**Copyright:** Copyright © OpenTelemetry Authors
+**Project URL:** https://github.com/open-telemetry/opentelemetry-dotnet
+**License:** Apache-2.0
+
+---
+
+## OpenTelemetry.Instrumentation.Runtime
+
+**Package:** OpenTelemetry.Instrumentation.Runtime
+**Version:** 1.15.1
+**Authors:** OpenTelemetry Authors
+**Copyright:** Copyright © OpenTelemetry Authors
+**Project URL:** https://github.com/open-telemetry/opentelemetry-dotnet-contrib
+**License:** Apache-2.0

@@ -3,6 +3,8 @@ using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.AddServiceDefaults();
+
 builder.Services
     .AddOptions<SymbolServerOptions>()
     .Bind(builder.Configuration.GetSection(SymbolServerOptions.SectionName))
@@ -32,6 +34,8 @@ builder.Services.AddSingleton<SymbolRequestHandler>();
 builder.Services.AddSingleton<SymbolServerStatistics>();
 
 var app = builder.Build();
+
+app.MapDefaultEndpoints();
 
 app.MapGet("/", () => Results.Ok(new { name = "Arbor.Symbols.Server", status = "ok" }));
 

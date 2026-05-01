@@ -2,6 +2,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Arbor.Symbols.Core\Arbor.Symbols.Core.csproj" />
+    <ProjectReference Include="..\Arbor.Symbols.ServiceDefaults\Arbor.Symbols.ServiceDefaults.csproj" />
   </ItemGroup>
 
   <ItemGroup>
