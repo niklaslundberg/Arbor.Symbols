@@ -10,7 +10,12 @@ permissions:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+
+    runs-on: ${{ matrix.os }}
 
     steps:
       - uses: actions/checkout@v4
@@ -36,7 +41,7 @@ jobs:
         uses: dorny/test-reporter@v1
         if: always()
         with:
-          name: Test Results
+          name: Test Results (${{ matrix.os }})
           path: TestResults/**/*.trx
           reporter: dotnet-trx
           fail-on-error: true
@@ -45,5 +50,23 @@ jobs:
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: coverage
+          name: coverage-${{ matrix.os }}
           path: TestResults/**/coverage.cobertura.xml
+
+      # Newly added and not yet verified against a clean baseline in every environment;
+      # kept non-blocking until a first green run confirms the repo is already compliant,
+      # then this should drop `continue-on-error` to become a hard gate.
+      - name: Check formatting
+        if: matrix.os == 'ubuntu-latest'
+        continue-on-error: true
+        run: dotnet format Arbor.Symbols.slnx --verify-no-changes
+
+      - name: Check for vulnerable packages
+        if: matrix.os == 'ubuntu-latest'
+        shell: bash
+        run: |
+          dotnet list Arbor.Symbols.slnx package --vulnerable --include-transitive | tee vulnerable-packages.txt
+          if grep -q "has the following vulnerable packages" vulnerable-packages.txt; then
+            echo "::error::Vulnerable package(s) detected, see log above."
+            exit 1
+          fi

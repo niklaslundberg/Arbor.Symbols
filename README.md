@@ -20,6 +20,22 @@ Examples:
 
 ## Arbor.Symbols.Server
 
+### Trust model
+
+Arbor.Symbols.Server is built for a **trusted internal network / single dev
+machine**, not public exposure. The symbol-download and PDB-generation
+endpoints have no authentication and no rate limiting; anyone who can reach
+the port can request symbols or trigger ILSpy decompilation (CPU-bound, up to
+several seconds per assembly per its own slow-generation logging). Only the
+`/ui` dashboard is restricted, and only to loopback callers (see below). Run
+this behind a firewall / on a private network; don't expose it directly to
+the internet or to untrusted clients.
+
+The on-disk symbol cache also has no automatic eviction — it grows without
+bound as symbols are requested. The `/ui` dashboard's per-entry delete button
+is currently the only cleanup mechanism; there is no size or age-based
+pruning. Monitor disk usage yourself if this runs unattended for a long time.
+
 ### Behavior
 
 For incoming symbol requests:
@@ -106,6 +122,11 @@ launch is unaffected.
    has no `ASPNETCORE_ENVIRONMENT=Development` from launch profiles, so it
    picks up `appsettings.Production.json`'s HTTP default automatically (see
    above).
+
+   A Windows Service has no attached console session, so in addition to the
+   Console sink, Serilog also writes to a rolling daily file under
+   `logs/arbor-symbols-<date>.log` next to the published executable
+   (14 days retained) — that's where to look for service-hosted logs.
 
 ## Arbor.Symbols.ConsoleClient
 

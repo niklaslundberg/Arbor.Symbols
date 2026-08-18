@@ -1,5 +1,8 @@
+using System.Net;
 using Arbor.Symbols.Core;
 using Arbor.Symbols.Server;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -121,7 +124,7 @@ public class UiEndpointTests
             builder.ConfigureServices(services =>
             {
                 services.RemoveAll<IOfficialSymbolClient>();
-                services.RemoveAll<SymbolStorage>();
+                services.RemoveAll<ISymbolStorage>();
                 services.RemoveAll<IOptions<SymbolServerOptions>>();
 
                 var options = new SymbolServerOptions
@@ -131,9 +134,16 @@ public class UiEndpointTests
                 };
 
                 services.AddSingleton<IOptions<SymbolServerOptions>>(new OptionsWrapper<SymbolServerOptions>(options));
-                services.AddSingleton(new SymbolStorage(options));
+                services.AddSingleton<ISymbolStorage>(new SymbolStorage(options));
 
                 services.AddSingleton<IOfficialSymbolClient, FakeOfficialSymbolClient>();
+
+                // TestServer has no real socket, so Connection.RemoteIpAddress is null by
+                // default. LoopbackAccessFilter now fails closed on null, so simulate what a
+                // real loopback caller looks like — matching the intended "localhost only"
+                // scenario these tests exercise — rather than accidentally relying on a
+                // null-address passthrough that no longer exists.
+                services.AddSingleton<IStartupFilter>(new LoopbackRemoteIpStartupFilter());
             });
         }
 
@@ -167,5 +177,18 @@ public class UiEndpointTests
             Stream stream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes("fake-symbol-data"));
             return Task.FromResult<Stream?>(stream);
         }
+    }
+
+    private sealed class LoopbackRemoteIpStartupFilter : IStartupFilter
+    {
+        public Action<IApplicationBuilder> Configure(Action<IApplicationBuilder> next) => app =>
+        {
+            app.Use(async (context, nextMiddleware) =>
+            {
+                context.Connection.RemoteIpAddress ??= IPAddress.Loopback;
+                await nextMiddleware();
+            });
+            next(app);
+        };
     }
 }

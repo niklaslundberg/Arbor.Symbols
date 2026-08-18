@@ -2,7 +2,7 @@ using Arbor.Symbols.Core;
 
 namespace Arbor.Symbols.Server;
 
-public sealed class SymbolStorage
+public sealed class SymbolStorage : ISymbolStorage
 {
     private readonly SymbolServerOptions _options;
 
@@ -36,8 +36,24 @@ public sealed class SymbolStorage
             Directory.CreateDirectory(directory);
         }
 
-        await using var destination = File.Create(path);
-        await source.CopyToAsync(destination, cancellationToken);
+        // Write to a temp file and rename into place so concurrent requests for the
+        // same missing symbol (or a reader hitting TryOpenRead mid-write) can never
+        // observe a truncated/interleaved file at the final path.
+        var temporaryPath = Path.Combine(directory ?? string.Empty, $"{Path.GetFileName(path)}.{Guid.NewGuid():N}.tmp");
+
+        try
+        {
+            await using (var destination = File.Create(temporaryPath))
+            {
+                await source.CopyToAsync(destination, cancellationToken);
+            }
+
+            File.Move(temporaryPath, path, overwrite: true);
+        }
+        finally
+        {
+            File.Delete(temporaryPath);
+        }
     }
 
     public IReadOnlyList<CachedSymbolEntry> GetCachedSymbols()

@@ -76,15 +76,17 @@ public static class Extensions
 
     public static WebApplication MapDefaultEndpoints(this WebApplication app)
     {
-        if (app.Environment.IsDevelopment())
-        {
-            app.MapHealthChecks("/health");
+        // Mapped in every environment (not just Development): this is a dev tool
+        // typically run as a single instance or Windows Service, and orchestrators
+        // or process supervisors rely on liveness/readiness probes being reachable
+        // wherever the app actually runs, not only when ASPNETCORE_ENVIRONMENT is
+        // Development.
+        app.MapHealthChecks("/health");
 
-            app.MapHealthChecks("/alive", new HealthCheckOptions
-            {
-                Predicate = r => r.Tags.Contains("live")
-            });
-        }
+        app.MapHealthChecks("/alive", new HealthCheckOptions
+        {
+            Predicate = r => r.Tags.Contains("live")
+        });
 
         return app;
     }

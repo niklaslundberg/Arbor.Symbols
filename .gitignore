@@ -1,5 +1,8 @@
 artifacts/
 
+# Serilog file sink output (src/Arbor.Symbols.Server)
+**/logs/
+
 # Build output
 **/bin/
 **/obj/

@@ -18,9 +18,15 @@ builder.Host.UseSerilog((context, services, configuration) => configuration
     .ReadFrom.Configuration(context.Configuration)
     .ReadFrom.Services(services)
     .Enrich.FromLogContext()
-    .WriteTo.Console());
+    .WriteTo.Console()
+    // Also log to a rolling file: when hosted via UseWindowsService(), the process has
+    // no attached console session, so the Console sink alone would silently drop logs.
+    .WriteTo.File(
+        Path.Combine(AppContext.BaseDirectory, "logs", "arbor-symbols-.log"),
+        rollingInterval: RollingInterval.Day,
+        retainedFileCountLimit: 14));
 
-builder.Services.AddSingleton(serviceProvider =>
+builder.Services.AddSingleton<ISymbolStorage>(serviceProvider =>
 {
     var options = serviceProvider.GetRequiredService<Microsoft.Extensions.Options.IOptions<SymbolServerOptions>>().Value;
     return new SymbolStorage(options);
@@ -52,18 +58,14 @@ var uiEndpoints = app.MapGroup("/ui")
     .AddEndpointFilter(async (ctx, next) =>
     {
         var remoteIp = ctx.HttpContext.Connection.RemoteIpAddress;
-        if (remoteIp is not null && !System.Net.IPAddress.IsLoopback(remoteIp))
-        {
-            return Results.StatusCode(403);
-        }
-        return await next(ctx);
+        return LoopbackAccessFilter.IsAllowed(remoteIp) ? await next(ctx) : Results.StatusCode(403);
     });
 
-uiEndpoints.MapGet("", (SymbolServerStatistics statistics, SymbolStorage storage)
+uiEndpoints.MapGet("", (SymbolServerStatistics statistics, ISymbolStorage storage)
     => UiEndpoints.Dashboard(statistics, storage));
 
 uiEndpoints.MapDelete("/cache/{requestedFileName}/{identifier}/{resourceFileName}",
-    (string requestedFileName, string identifier, string resourceFileName, SymbolStorage storage)
+    (string requestedFileName, string identifier, string resourceFileName, ISymbolStorage storage)
         => UiEndpoints.DeleteCacheEntry(requestedFileName, identifier, resourceFileName, storage));
 
 app.MapGet("/{requestedFileName}/{identifier}/{resourceFileName}",
