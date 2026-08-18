@@ -45,6 +45,26 @@ dotnet run --project src/Arbor.Symbols.Server/Arbor.Symbols.Server.csproj
 
 Configure in `appsettings.json` (`SymbolServer` section).
 
+### HTTP / HTTPS
+
+The server listens on plain HTTP by default (`http://0.0.0.0:5000`, see the
+`Kestrel:Endpoints:Http` section in `appsettings.json`). HTTPS is optional —
+add an `Https` endpoint to enable it:
+
+```json
+"Kestrel": {
+  "Endpoints": {
+    "Http": { "Url": "http://0.0.0.0:5000" },
+    "Https": { "Url": "https://0.0.0.0:5001" }
+  }
+}
+```
+
+or set the `ASPNETCORE_URLS` environment variable, e.g.
+`ASPNETCORE_URLS=http://0.0.0.0:5000;https://0.0.0.0:5001`. Locally,
+`dotnet run` uses the `http` launch profile by default (`--launch-profile
+https` to opt into HTTPS); the Aspire AppHost does the same.
+
 ## Arbor.Symbols.ConsoleClient
 
 Scans a local directory for `.dll`, `.exe`, and `.pdb`, creates debugger-compatible symbol requests, downloads from Arbor.Symbols.Server, and stores symbols in Visual Studio symbol-cache structure:
@@ -73,3 +93,24 @@ The client logs download status using Serilog.
 dotnet build Arbor.Symbols.slnx
 dotnet test Arbor.Symbols.slnx
 ```
+
+Package versions are centrally managed in `Directory.Packages.props` (NuGet
+Central Package Management); project files reference packages without a
+version. Build/publish output is written under `artifacts/` (MSBuild
+[artifacts output layout](https://learn.microsoft.com/dotnet/core/sdk/artifacts-output)),
+not per-project `bin`/`obj`.
+
+## Release artifacts
+
+```bash
+scripts/release.sh [version]
+```
+
+Builds `Arbor.Symbols.Server` and `Arbor.Symbols.ConsoleClient` in Release
+and publishes each as a **framework-dependent, portable** deployment (no
+runtime identifier, no bundled runtime) into `artifacts/release/`, one
+`.zip` (or `.tar.gz` if `zip` isn't available) plus a `.sha256` checksum per
+project. The resulting archive can be copied to any machine with the
+matching [.NET 10 runtime](https://dotnet.microsoft.com/download/dotnet/10.0)
+installed and run with `dotnet <Project>.dll` — no SDK required on the
+target machine.
