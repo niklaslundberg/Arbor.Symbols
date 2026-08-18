@@ -19,7 +19,7 @@ public class OfficialSymbolClientTests
 
         stream.Should().NotBeNull();
         using var reader = new StreamReader(stream!);
-        (await reader.ReadToEndAsync()).Should().Be("symbol-bytes");
+        (await reader.ReadToEndAsync(TestContext.Current.CancellationToken)).Should().Be("symbol-bytes");
     }
 
     [Fact]

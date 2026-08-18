@@ -22,7 +22,7 @@ public class SymbolPrefetcherTests : IDisposable
     {
         var destinationPath = SymbolResourcePathHelper.GetCachePath(_cacheRoot, Request);
         Directory.CreateDirectory(Path.GetDirectoryName(destinationPath)!);
-        await File.WriteAllTextAsync(destinationPath, "already-cached");
+        await File.WriteAllTextAsync(destinationPath, "already-cached", TestContext.Current.CancellationToken);
         var handler = new CountingHandler(_ => new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent("new-content") });
 
         var result = await SymbolPrefetcher.RunAsync(
@@ -30,7 +30,7 @@ public class SymbolPrefetcherTests : IDisposable
 
         result.Should().Be(new PrefetchResult(Downloaded: 0, Skipped: 1, Failed: 0));
         handler.CallCount.Should().Be(0);
-        (await File.ReadAllTextAsync(destinationPath)).Should().Be("already-cached");
+        (await File.ReadAllTextAsync(destinationPath, TestContext.Current.CancellationToken)).Should().Be("already-cached");
     }
 
     [Fact]
@@ -38,7 +38,7 @@ public class SymbolPrefetcherTests : IDisposable
     {
         var destinationPath = SymbolResourcePathHelper.GetCachePath(_cacheRoot, Request);
         Directory.CreateDirectory(Path.GetDirectoryName(destinationPath)!);
-        await File.WriteAllTextAsync(destinationPath, "stale-content");
+        await File.WriteAllTextAsync(destinationPath, "stale-content", TestContext.Current.CancellationToken);
         var handler = new CountingHandler(_ => new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent("fresh-content") });
 
         var result = await SymbolPrefetcher.RunAsync(
@@ -46,7 +46,7 @@ public class SymbolPrefetcherTests : IDisposable
 
         result.Should().Be(new PrefetchResult(Downloaded: 1, Skipped: 0, Failed: 0));
         handler.CallCount.Should().Be(1);
-        (await File.ReadAllTextAsync(destinationPath)).Should().Be("fresh-content");
+        (await File.ReadAllTextAsync(destinationPath, TestContext.Current.CancellationToken)).Should().Be("fresh-content");
     }
 
     [Fact]
@@ -72,7 +72,7 @@ public class SymbolPrefetcherTests : IDisposable
 
         result.Should().Be(new PrefetchResult(Downloaded: 1, Skipped: 0, Failed: 0));
         var destinationPath = SymbolResourcePathHelper.GetCachePath(_cacheRoot, Request);
-        (await File.ReadAllTextAsync(destinationPath)).Should().Be("downloaded-content");
+        (await File.ReadAllTextAsync(destinationPath, TestContext.Current.CancellationToken)).Should().Be("downloaded-content");
 
         Directory.GetFiles(Path.GetDirectoryName(destinationPath)!)
             .Should().ContainSingle().Which.Should().Be(destinationPath);

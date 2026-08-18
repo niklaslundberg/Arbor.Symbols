@@ -113,7 +113,7 @@ public class SymbolRequestHandlerTests
 
         context.Response.Body.Seek(0, SeekOrigin.Begin);
         using var buffer = new MemoryStream();
-        await context.Response.Body.CopyToAsync(buffer);
+        await context.Response.Body.CopyToAsync(buffer, TestContext.Current.CancellationToken);
         return (context.Response.StatusCode, buffer.ToArray());
     }
 
