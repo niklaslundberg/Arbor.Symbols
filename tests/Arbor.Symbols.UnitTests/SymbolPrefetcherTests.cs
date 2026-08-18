@@ -26,7 +26,7 @@ public class SymbolPrefetcherTests : IDisposable
         var handler = new CountingHandler(_ => new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent("new-content") });
 
         var result = await SymbolPrefetcher.RunAsync(
-            CreateClient(handler), [Request], _cacheRoot, force: false, dryRun: false, maxConcurrency: 1, CancellationToken.None);
+            CreateClient(handler), [Request], _cacheRoot, force: false, dryRun: false, maxConcurrency: 1, TestContext.Current.CancellationToken);
 
         result.Should().Be(new PrefetchResult(Downloaded: 0, Skipped: 1, Failed: 0));
         handler.CallCount.Should().Be(0);
@@ -42,7 +42,7 @@ public class SymbolPrefetcherTests : IDisposable
         var handler = new CountingHandler(_ => new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent("fresh-content") });
 
         var result = await SymbolPrefetcher.RunAsync(
-            CreateClient(handler), [Request], _cacheRoot, force: true, dryRun: false, maxConcurrency: 1, CancellationToken.None);
+            CreateClient(handler), [Request], _cacheRoot, force: true, dryRun: false, maxConcurrency: 1, TestContext.Current.CancellationToken);
 
         result.Should().Be(new PrefetchResult(Downloaded: 1, Skipped: 0, Failed: 0));
         handler.CallCount.Should().Be(1);
@@ -55,7 +55,7 @@ public class SymbolPrefetcherTests : IDisposable
         var handler = new CountingHandler(_ => new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent("content") });
 
         var result = await SymbolPrefetcher.RunAsync(
-            CreateClient(handler), [Request], _cacheRoot, force: false, dryRun: true, maxConcurrency: 1, CancellationToken.None);
+            CreateClient(handler), [Request], _cacheRoot, force: false, dryRun: true, maxConcurrency: 1, TestContext.Current.CancellationToken);
 
         result.Should().Be(new PrefetchResult(Downloaded: 1, Skipped: 0, Failed: 0));
         handler.CallCount.Should().Be(0);
@@ -68,7 +68,7 @@ public class SymbolPrefetcherTests : IDisposable
         var handler = new CountingHandler(_ => new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent("downloaded-content") });
 
         var result = await SymbolPrefetcher.RunAsync(
-            CreateClient(handler), [Request], _cacheRoot, force: false, dryRun: false, maxConcurrency: 1, CancellationToken.None);
+            CreateClient(handler), [Request], _cacheRoot, force: false, dryRun: false, maxConcurrency: 1, TestContext.Current.CancellationToken);
 
         result.Should().Be(new PrefetchResult(Downloaded: 1, Skipped: 0, Failed: 0));
         var destinationPath = SymbolResourcePathHelper.GetCachePath(_cacheRoot, Request);
@@ -84,7 +84,7 @@ public class SymbolPrefetcherTests : IDisposable
         var handler = new CountingHandler(_ => new HttpResponseMessage(HttpStatusCode.InternalServerError));
 
         var result = await SymbolPrefetcher.RunAsync(
-            CreateClient(handler), [Request], _cacheRoot, force: false, dryRun: false, maxConcurrency: 1, CancellationToken.None);
+            CreateClient(handler), [Request], _cacheRoot, force: false, dryRun: false, maxConcurrency: 1, TestContext.Current.CancellationToken);
 
         result.Should().Be(new PrefetchResult(Downloaded: 0, Skipped: 0, Failed: 1));
         File.Exists(SymbolResourcePathHelper.GetCachePath(_cacheRoot, Request)).Should().BeFalse();

@@ -31,7 +31,7 @@ public class SymbolStorageTests : IDisposable
         var storage = CreateStorage();
         var request = new SymbolResourceRequest("MyLib.pdb", "ABC123", "MyLib.pdb");
 
-        await storage.SaveAsync(request, new MemoryStream("hello"u8.ToArray()), CancellationToken.None);
+        await storage.SaveAsync(request, new MemoryStream("hello"u8.ToArray()), TestContext.Current.CancellationToken);
 
         var entries = storage.GetCachedSymbols();
 
@@ -56,8 +56,8 @@ public class SymbolStorageTests : IDisposable
     {
         var storage = CreateStorage();
 
-        await storage.SaveAsync(new SymbolResourceRequest("A.pdb", "1", "A.pdb"), new MemoryStream(new byte[10]), CancellationToken.None);
-        await storage.SaveAsync(new SymbolResourceRequest("B.pdb", "2", "B.pdb"), new MemoryStream(new byte[25]), CancellationToken.None);
+        await storage.SaveAsync(new SymbolResourceRequest("A.pdb", "1", "A.pdb"), new MemoryStream(new byte[10]), TestContext.Current.CancellationToken);
+        await storage.SaveAsync(new SymbolResourceRequest("B.pdb", "2", "B.pdb"), new MemoryStream(new byte[25]), TestContext.Current.CancellationToken);
 
         storage.GetDiskUsageBytes().Should().Be(35);
     }
@@ -76,7 +76,7 @@ public class SymbolStorageTests : IDisposable
     {
         var storage = CreateStorage();
         var request = new SymbolResourceRequest("MyLib.pdb", "ABC123", "MyLib.pdb");
-        await storage.SaveAsync(request, new MemoryStream("hello"u8.ToArray()), CancellationToken.None);
+        await storage.SaveAsync(request, new MemoryStream("hello"u8.ToArray()), TestContext.Current.CancellationToken);
         var path = storage.GetPath(request);
 
         storage.TryDelete(request).Should().BeTrue();
@@ -89,7 +89,7 @@ public class SymbolStorageTests : IDisposable
     {
         var storage = CreateStorage();
         var request = new SymbolResourceRequest("MyLib.pdb", "ABC123", "MyLib.pdb");
-        await storage.SaveAsync(request, new MemoryStream("hello"u8.ToArray()), CancellationToken.None);
+        await storage.SaveAsync(request, new MemoryStream("hello"u8.ToArray()), TestContext.Current.CancellationToken);
         var path = storage.GetPath(request);
         var identifierDir = Path.GetDirectoryName(path)!;
         var fileNameDir = Path.GetDirectoryName(identifierDir)!;
@@ -106,8 +106,8 @@ public class SymbolStorageTests : IDisposable
         var storage = CreateStorage();
         var deleted = new SymbolResourceRequest("MyLib.pdb", "ABC123", "MyLib.pdb");
         var sibling = new SymbolResourceRequest("MyLib.pdb", "DEF456", "MyLib.pdb");
-        await storage.SaveAsync(deleted, new MemoryStream("hello"u8.ToArray()), CancellationToken.None);
-        await storage.SaveAsync(sibling, new MemoryStream("world"u8.ToArray()), CancellationToken.None);
+        await storage.SaveAsync(deleted, new MemoryStream("hello"u8.ToArray()), TestContext.Current.CancellationToken);
+        await storage.SaveAsync(sibling, new MemoryStream("world"u8.ToArray()), TestContext.Current.CancellationToken);
         var fileNameDir = Path.GetDirectoryName(Path.GetDirectoryName(storage.GetPath(deleted)))!;
 
         storage.TryDelete(deleted).Should().BeTrue();

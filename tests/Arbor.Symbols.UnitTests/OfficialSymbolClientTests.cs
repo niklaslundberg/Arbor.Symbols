@@ -15,7 +15,7 @@ public class OfficialSymbolClientTests
             new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent("symbol-bytes") });
         var client = new OfficialSymbolClient(new HttpClient(handler) { BaseAddress = new Uri("https://example.test/") });
 
-        await using var stream = await client.TryDownloadAsync(Request, CancellationToken.None);
+        await using var stream = await client.TryDownloadAsync(Request, TestContext.Current.CancellationToken);
 
         stream.Should().NotBeNull();
         using var reader = new StreamReader(stream!);
@@ -28,7 +28,7 @@ public class OfficialSymbolClientTests
         var handler = new StubHttpMessageHandler(_ => new HttpResponseMessage(HttpStatusCode.NotFound));
         var client = new OfficialSymbolClient(new HttpClient(handler) { BaseAddress = new Uri("https://example.test/") });
 
-        var stream = await client.TryDownloadAsync(Request, CancellationToken.None);
+        var stream = await client.TryDownloadAsync(Request, TestContext.Current.CancellationToken);
 
         stream.Should().BeNull();
     }
@@ -39,7 +39,7 @@ public class OfficialSymbolClientTests
         var handler = new StubHttpMessageHandler(_ => throw new HttpRequestException("network error"));
         var client = new OfficialSymbolClient(new HttpClient(handler) { BaseAddress = new Uri("https://example.test/") });
 
-        var stream = await client.TryDownloadAsync(Request, CancellationToken.None);
+        var stream = await client.TryDownloadAsync(Request, TestContext.Current.CancellationToken);
 
         stream.Should().BeNull();
     }

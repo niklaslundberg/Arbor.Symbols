@@ -20,7 +20,7 @@ public class SymbolRequestHandlerTests
 
         var handler = CreateHandler(storage, officialClient, new FakeIlSpySymbolGenerator(false), statistics);
 
-        var result = await handler.HandleAsync(Request.RequestedFileName, Request.Identifier, Request.ResourceFileName, CancellationToken.None);
+        var result = await handler.HandleAsync(Request.RequestedFileName, Request.Identifier, Request.ResourceFileName, TestContext.Current.CancellationToken);
 
         var (statusCode, body) = await ExecuteAsync(result);
         statusCode.Should().Be(StatusCodes.Status200OK);
@@ -39,7 +39,7 @@ public class SymbolRequestHandlerTests
 
         var handler = CreateHandler(storage, officialClient, new FakeIlSpySymbolGenerator(false), statistics);
 
-        var result = await handler.HandleAsync(Request.RequestedFileName, Request.Identifier, Request.ResourceFileName, CancellationToken.None);
+        var result = await handler.HandleAsync(Request.RequestedFileName, Request.Identifier, Request.ResourceFileName, TestContext.Current.CancellationToken);
 
         var (statusCode, body) = await ExecuteAsync(result);
         statusCode.Should().Be(StatusCodes.Status200OK);
@@ -57,7 +57,7 @@ public class SymbolRequestHandlerTests
 
         var handler = CreateHandler(storage, officialClient, new FakeIlSpySymbolGenerator(false), statistics);
 
-        var result = await handler.HandleAsync(Request.RequestedFileName, Request.Identifier, Request.ResourceFileName, CancellationToken.None);
+        var result = await handler.HandleAsync(Request.RequestedFileName, Request.Identifier, Request.ResourceFileName, TestContext.Current.CancellationToken);
 
         var (statusCode, _) = await ExecuteAsync(result);
         statusCode.Should().Be(StatusCodes.Status404NotFound);
@@ -80,7 +80,7 @@ public class SymbolRequestHandlerTests
 
         var handler = CreateHandler(storage, officialClient, new FakeIlSpySymbolGenerator(false), statistics);
 
-        var result = await handler.HandleAsync(requestedFileName, identifier, resourceFileName, CancellationToken.None);
+        var result = await handler.HandleAsync(requestedFileName, identifier, resourceFileName, TestContext.Current.CancellationToken);
 
         var (statusCode, _) = await ExecuteAsync(result);
         statusCode.Should().Be(StatusCodes.Status400BadRequest);
