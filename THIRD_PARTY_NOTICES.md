@@ -165,6 +165,17 @@ This file contains license and attribution notices for third-party packages used
 
 ---
 
+## Microsoft.Extensions.Hosting.WindowsServices
+
+**Package:** Microsoft.Extensions.Hosting.WindowsServices
+**Version:** 10.0.11
+**Authors:** Microsoft
+**Copyright:** Copyright © Microsoft Corporation. All rights reserved.
+**Project URL:** https://github.com/dotnet/runtime
+**License:** MIT
+
+---
+
 ## Microsoft.Extensions.Http.Resilience
 
 **Package:** Microsoft.Extensions.Http.Resilience

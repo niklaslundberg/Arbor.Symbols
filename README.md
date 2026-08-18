@@ -65,6 +65,33 @@ or set the `ASPNETCORE_URLS` environment variable, e.g.
 `dotnet run` uses the `http` launch profile by default (`--launch-profile
 https` to opt into HTTPS); the Aspire AppHost does the same.
 
+### Windows Service (opt-in)
+
+The server can run as a Windows Service — it's opt-in: `Program.cs` calls
+`UseWindowsService()`, which is a no-op unless the process is actually
+started by the Service Control Manager, so `dotnet run` / a normal console
+launch is unaffected.
+
+1. Publish a Windows-targeted, framework-dependent build (needs the
+   [.NET 10 runtime](https://dotnet.microsoft.com/download/dotnet/10.0) on
+   the target machine, produces a native `Arbor.Symbols.Server.exe`):
+
+   ```powershell
+   dotnet publish src\Arbor.Symbols.Server\Arbor.Symbols.Server.csproj `
+     --configuration Release --runtime win-x64 --self-contained false
+   ```
+
+2. Register and start the service (elevated PowerShell):
+
+   ```powershell
+   scripts\windows-service.ps1 -Install -ExePath <path>\Arbor.Symbols.Server.exe
+   ```
+
+   Uninstall with `scripts\windows-service.ps1 -Uninstall`. Under the hood
+   this just wraps `sc.exe create`/`sc.exe delete`; service-managed
+   processes have no console, so make sure `appsettings.json` (or
+   `ASPNETCORE_URLS`) sets an explicit HTTP(S) endpoint as shown above.
+
 ## Arbor.Symbols.ConsoleClient
 
 Scans a local directory for `.dll`, `.exe`, and `.pdb`, creates debugger-compatible symbol requests, downloads from Arbor.Symbols.Server, and stores symbols in Visual Studio symbol-cache structure:
