@@ -121,7 +121,7 @@ public class UiEndpointTests
             builder.ConfigureServices(services =>
             {
                 services.RemoveAll<IOfficialSymbolClient>();
-                services.RemoveAll<SymbolStorage>();
+                services.RemoveAll<ISymbolStorage>();
                 services.RemoveAll<IOptions<SymbolServerOptions>>();
 
                 var options = new SymbolServerOptions
@@ -131,7 +131,7 @@ public class UiEndpointTests
                 };
 
                 services.AddSingleton<IOptions<SymbolServerOptions>>(new OptionsWrapper<SymbolServerOptions>(options));
-                services.AddSingleton(new SymbolStorage(options));
+                services.AddSingleton<ISymbolStorage>(new SymbolStorage(options));
 
                 services.AddSingleton<IOfficialSymbolClient, FakeOfficialSymbolClient>();
             });

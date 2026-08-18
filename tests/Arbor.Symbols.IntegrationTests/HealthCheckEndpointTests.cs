@@ -28,7 +28,7 @@ public class HealthCheckEndpointTests
     [Theory]
     [InlineData("/health")]
     [InlineData("/alive")]
-    public async Task HealthEndpoints_ReturnNotFound_InProduction(string path)
+    public async Task HealthEndpoints_ReturnOk_InProduction(string path)
     {
         var cacheRoot = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
 
@@ -37,7 +37,7 @@ public class HealthCheckEndpointTests
 
         var response = await client.GetAsync(path, TestContext.Current.CancellationToken);
 
-        response.StatusCode.Should().Be(System.Net.HttpStatusCode.NotFound);
+        response.StatusCode.Should().Be(System.Net.HttpStatusCode.OK);
     }
 
     private sealed class HealthCheckWebApplicationFactory(string cacheDirectory, string environment)
@@ -50,7 +50,7 @@ public class HealthCheckEndpointTests
             builder.ConfigureServices(services =>
             {
                 services.RemoveAll<IOfficialSymbolClient>();
-                services.RemoveAll<SymbolStorage>();
+                services.RemoveAll<ISymbolStorage>();
                 services.RemoveAll<IOptions<SymbolServerOptions>>();
 
                 var options = new SymbolServerOptions
@@ -60,7 +60,7 @@ public class HealthCheckEndpointTests
                 };
 
                 services.AddSingleton<IOptions<SymbolServerOptions>>(new OptionsWrapper<SymbolServerOptions>(options));
-                services.AddSingleton(new SymbolStorage(options));
+                services.AddSingleton<ISymbolStorage>(new SymbolStorage(options));
                 services.AddSingleton<IOfficialSymbolClient, NullOfficialSymbolClient>();
             });
         }

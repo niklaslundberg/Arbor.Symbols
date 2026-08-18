@@ -22,8 +22,13 @@
   </ItemGroup>
 
   <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\..\src\Arbor.Symbols.ConsoleClient\Arbor.Symbols.ConsoleClient.csproj" />
     <ProjectReference Include="..\..\src\Arbor.Symbols.Core\Arbor.Symbols.Core.csproj" />
+    <ProjectReference Include="..\..\src\Arbor.Symbols.Server\Arbor.Symbols.Server.csproj" />
   </ItemGroup>
 
 </Project>

@@ -54,91 +54,21 @@ try
     await using var serviceProvider = services.BuildServiceProvider();
     var httpClient = serviceProvider.GetRequiredService<IHttpClientFactory>().CreateClient("SymbolServer");
 
-    var downloaded = 0;
-    var skipped = 0;
-    var failed = 0;
-
-    var parallelOptions = new ParallelOptions
-    {
-        MaxDegreeOfParallelism = options.MaxConcurrency,
-        CancellationToken = cancellationTokenSource.Token
-    };
-
-    await Parallel.ForEachAsync(requests, parallelOptions, async (request, cancellationToken) =>
-    {
-        var destinationPath = SymbolResourcePathHelper.GetCachePath(options.CacheDirectory, request);
-
-        if (!options.Force && File.Exists(destinationPath))
-        {
-            Interlocked.Increment(ref skipped);
-            return;
-        }
-
-        if (options.DryRun)
-        {
-            Log.Information("[dry-run] Would fetch {RelativePath}", request.RelativePath);
-            Interlocked.Increment(ref downloaded);
-            return;
-        }
-
-        var relativeUri = SymbolResourcePathHelper.BuildRelativeUri(request);
-
-        try
-        {
-            using var response = await httpClient.GetAsync(relativeUri, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
-            if (!response.IsSuccessStatusCode)
-            {
-                Interlocked.Increment(ref failed);
-                Log.Warning("Failed to fetch {RelativePath} ({StatusCode})", request.RelativePath, response.StatusCode);
-                return;
-            }
-
-            var destinationDirectory = Path.GetDirectoryName(destinationPath);
-            if (!string.IsNullOrWhiteSpace(destinationDirectory))
-            {
-                Directory.CreateDirectory(destinationDirectory);
-            }
-
-            // Download to a temp file and rename into place so an interrupted copy
-            // (exception/cancellation/process exit) can never leave a partial file
-            // at destinationPath, which a later run would otherwise treat as cached.
-            var temporaryPath = Path.Combine(destinationDirectory ?? string.Empty, $"{Path.GetFileName(destinationPath)}.{Guid.NewGuid():N}.download");
-
-            try
-            {
-                await using (var destination = File.Create(temporaryPath))
-                await using (var source = await response.Content.ReadAsStreamAsync(cancellationToken))
-                {
-                    await source.CopyToAsync(destination, cancellationToken);
-                }
-
-                File.Move(temporaryPath, destinationPath, overwrite: true);
-            }
-            finally
-            {
-                File.Delete(temporaryPath);
-            }
-
-            Interlocked.Increment(ref downloaded);
-            Log.Information("Downloaded {RelativePath}", request.RelativePath);
-        }
-        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
-        {
-            throw;
-        }
-        catch (Exception ex)
-        {
-            Interlocked.Increment(ref failed);
-            Log.Warning(ex, "Error fetching {RelativePath}", request.RelativePath);
-        }
-    });
+    var result = await SymbolPrefetcher.RunAsync(
+        httpClient,
+        requests,
+        options.CacheDirectory,
+        options.Force,
+        options.DryRun,
+        options.MaxConcurrency,
+        cancellationTokenSource.Token);
 
     var verb = options.DryRun ? "Would download" : "Downloaded";
     Log.Information(
         "Completed preload. {Verb}: {Downloaded}. Skipped (cached): {Skipped}. Failed: {Failed}.",
-        verb, downloaded, skipped, failed);
+        verb, result.Downloaded, result.Skipped, result.Failed);
 
-    return failed > 0 ? 3 : 0;
+    return result.Failed > 0 ? 3 : 0;
 }
 catch (OperationCanceledException)
 {

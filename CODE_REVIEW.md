@@ -299,6 +299,39 @@ Each task below is scoped to be a single, self-contained PR: one concern, a
 concrete set of files, and a clear "done" condition. Ordered by priority
 within each group; groups are independent of each other.
 
+### Status (2026-08-18)
+
+The project's target was confirmed as **still a trusted-network dev tool**
+for now, so tasks 1–11 and 14–17 were implemented as originally scoped, while
+12–13 (the two items that only make sense once the deployment target
+changes) were resolved by documenting the assumption instead of building
+unneeded hardening:
+
+| # | Task | Status |
+| - | --- | --- |
+| 1 | Atomic cache writes in `SymbolStorage.SaveAsync` | ✅ Done — also extended to `IlSpySymbolGenerator`'s direct PDB write, which had the same race and wasn't originally called out separately |
+| 2 | 400 instead of 500 on path-validation failure | ✅ Done |
+| 3 | Bound/offload ILSpy generation | ✅ Done — concurrency cap is now `SymbolServer:MaxConcurrentIlSpyGenerations` (default 2), not hardcoded |
+| 4 | Stream official downloads instead of triple-buffering | ✅ Done |
+| 5 | Extract `ISymbolStorage` + unit-test `SymbolRequestHandler` | ✅ Done |
+| 6 | Path-traversal guard tests | ✅ Done |
+| 7 | `SymbolStorage` unit tests | ✅ Done |
+| 8 | `OfficialSymbolClient` unit tests | ✅ Done |
+| 9 | `/ui` loopback restriction test | ✅ Done — extracted `LoopbackAccessFilter.IsAllowed` for direct unit testing |
+| 10 | Extract ConsoleClient download loop | ✅ Done — new `SymbolPrefetcher` class |
+| 11 | Health checks outside Development | ✅ Done — `/health`/`/alive` now map unconditionally |
+| 12 | Trust boundary for download endpoints | 📝 Documented in README ("Trust model" section) instead of adding rate limiting — still a trusted-network tool by design, so auth/rate limiting would be unneeded complexity for now. Revisit if the deployment target changes |
+| 13 | Cache eviction policy | 📝 Documented in README as unbounded/manual-cleanup-only, same reasoning as #12 |
+| 14 | Windows Service log sink | ✅ Done — added a rolling-file Serilog sink alongside Console |
+| 15 | `windows-latest` CI leg | ✅ Done — CI is now a `[ubuntu-latest, windows-latest]` matrix |
+| 16 | Dependency vulnerability scan in CI | ✅ Done — `dotnet list package --vulnerable`, fails the job on a hit |
+| 17 | `dotnet format --verify-no-changes` in CI | ✅ Added, but with `continue-on-error: true` for now — this codebase has never been checked against `dotnet format` before, and there was no way to run it locally in the session that added it to confirm a clean baseline. Drop `continue-on-error` once a run confirms the repo passes as-is (or fix what it flags first) |
+
+Note on verification: the sandbox this round of fixes was made in has no
+`dotnet` SDK available (network-restricted), so none of the above was built
+or test-run locally — it's reviewed by hand for correctness and will get its
+first real verification from CI on push.
+
 ### P0 — Correctness (fix regardless of deployment target)
 
 1. **Make `SymbolStorage.SaveAsync` write atomically.**

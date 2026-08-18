@@ -36,7 +36,7 @@ public class SymbolEndpointTests
             builder.ConfigureServices(services =>
             {
                 services.RemoveAll<IOfficialSymbolClient>();
-                services.RemoveAll<SymbolStorage>();
+                services.RemoveAll<ISymbolStorage>();
                 services.RemoveAll<IOptions<SymbolServerOptions>>();
 
                 services.AddSingleton<IOptions<SymbolServerOptions>>(
@@ -46,7 +46,7 @@ public class SymbolEndpointTests
                         AssemblySearchDirectories = []
                     }));
 
-                services.AddSingleton<SymbolStorage>(new SymbolStorage(new SymbolServerOptions
+                services.AddSingleton<ISymbolStorage>(new SymbolStorage(new SymbolServerOptions
                 {
                     CacheDirectory = cacheDirectory,
                     AssemblySearchDirectories = []

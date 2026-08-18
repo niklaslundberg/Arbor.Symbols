@@ -4,7 +4,7 @@ namespace Arbor.Symbols.Server;
 
 public static class UiEndpoints
 {
-    public static IResult Dashboard(SymbolServerStatistics statistics, SymbolStorage storage)
+    public static IResult Dashboard(SymbolServerStatistics statistics, ISymbolStorage storage)
     {
         var cached = storage.GetCachedSymbols().OrderByDescending(e => e.LastModifiedUtc).ToArray();
         var diskBytes = cached.Sum(e => e.SizeBytes);
@@ -143,10 +143,18 @@ public static class UiEndpoints
         string requestedFileName,
         string identifier,
         string resourceFileName,
-        SymbolStorage storage)
+        ISymbolStorage storage)
     {
         var request = new SymbolResourceRequest(requestedFileName, identifier, resourceFileName);
-        return storage.TryDelete(request) ? Results.Ok() : Results.NotFound();
+
+        try
+        {
+            return storage.TryDelete(request) ? Results.Ok() : Results.NotFound();
+        }
+        catch (InvalidOperationException)
+        {
+            return Results.BadRequest();
+        }
     }
 
     private static string FormatBytes(long bytes)

@@ -5,7 +5,7 @@ namespace Arbor.Symbols.Server;
 
 public sealed class SymbolRequestHandler
 {
-    private readonly SymbolStorage _storage;
+    private readonly ISymbolStorage _storage;
     private readonly IOfficialSymbolClient _officialSymbolClient;
     private readonly IIlSpySymbolGenerator _ilSpySymbolGenerator;
     private readonly SymbolServerOptions _options;
@@ -13,7 +13,7 @@ public sealed class SymbolRequestHandler
     private readonly SymbolServerStatistics _statistics;
 
     public SymbolRequestHandler(
-        SymbolStorage storage,
+        ISymbolStorage storage,
         IOfficialSymbolClient officialSymbolClient,
         IIlSpySymbolGenerator ilSpySymbolGenerator,
         IOptions<SymbolServerOptions> options,
@@ -32,6 +32,19 @@ public sealed class SymbolRequestHandler
     {
         var request = new SymbolResourceRequest(requestedFileName, identifier, resourceFileName);
 
+        try
+        {
+            return await HandleRequestAsync(request, resourceFileName, cancellationToken);
+        }
+        catch (InvalidOperationException ex)
+        {
+            _logger.LogWarning(ex, "Rejected invalid symbol request {RelativePath}", request.RelativePath);
+            return Results.BadRequest();
+        }
+    }
+
+    private async Task<IResult> HandleRequestAsync(SymbolResourceRequest request, string resourceFileName, CancellationToken cancellationToken)
+    {
         if (_storage.TryOpenRead(request, out var cachedStream))
         {
             _logger.LogInformation("Serving cached symbol {RelativePath}", request.RelativePath);
@@ -42,15 +55,14 @@ public sealed class SymbolRequestHandler
         await using var officialStream = await _officialSymbolClient.TryDownloadAsync(request, cancellationToken);
         if (officialStream is not null)
         {
-            await using var memoryStream = new MemoryStream();
-            await officialStream.CopyToAsync(memoryStream, cancellationToken);
-            var bytes = memoryStream.ToArray();
-            await using var copySource = new MemoryStream(bytes);
-            await _storage.SaveAsync(request, copySource, cancellationToken);
+            await _storage.SaveAsync(request, officialStream, cancellationToken);
 
-            _logger.LogInformation("Downloaded symbol from Microsoft symbol server {RelativePath}", request.RelativePath);
-            _statistics.RecordOfficialDownload();
-            return Results.File(bytes, GetContentType(resourceFileName));
+            if (_storage.TryOpenRead(request, out var downloadedStream))
+            {
+                _logger.LogInformation("Downloaded symbol from Microsoft symbol server {RelativePath}", request.RelativePath);
+                _statistics.RecordOfficialDownload();
+                return Results.Stream(downloadedStream, GetContentType(resourceFileName));
+            }
         }
 
         if (resourceFileName.EndsWith(".pdb", StringComparison.OrdinalIgnoreCase) &&

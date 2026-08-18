@@ -113,7 +113,7 @@ public class SymbolGenerationSystemTests
             builder.ConfigureServices(services =>
             {
                 services.RemoveAll<IOfficialSymbolClient>();
-                services.RemoveAll<SymbolStorage>();
+                services.RemoveAll<ISymbolStorage>();
                 services.RemoveAll<IOptions<SymbolServerOptions>>();
 
                 var options = new SymbolServerOptions
@@ -123,7 +123,7 @@ public class SymbolGenerationSystemTests
                 };
 
                 services.AddSingleton<IOptions<SymbolServerOptions>>(new OptionsWrapper<SymbolServerOptions>(options));
-                services.AddSingleton(new SymbolStorage(options));
+                services.AddSingleton<ISymbolStorage>(new SymbolStorage(options));
 
                 // Return null for all requests so the handler falls through to ILSpy generation
                 services.AddSingleton<IOfficialSymbolClient, AlwaysNotFoundSymbolClient>();
