@@ -38,7 +38,7 @@ public sealed class IlSpySymbolGenerator(ILogger<IlSpySymbolGenerator> logger) :
 
         var stopwatch = Stopwatch.StartNew();
         using var stream = File.Create(outputPdbPath);
-        PortablePdbWriter.WritePdb(file, decompiler, decompilerSettings, stream);
+        new PortablePdbWriter().WritePdb(file, decompiler, decompilerSettings, stream);
         stopwatch.Stop();
 
         if (stopwatch.Elapsed >= SlowGenerationThreshold)

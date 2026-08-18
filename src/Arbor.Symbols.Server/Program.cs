@@ -3,6 +3,10 @@ using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// No-op unless the process is actually started by the Windows Service
+// Control Manager, so running as a service is opt-in (see README).
+builder.Host.UseWindowsService(options => options.ServiceName = "Arbor.Symbols.Server");
+
 builder.AddServiceDefaults();
 
 builder.Services

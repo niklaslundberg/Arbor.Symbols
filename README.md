@@ -45,6 +45,68 @@ dotnet run --project src/Arbor.Symbols.Server/Arbor.Symbols.Server.csproj
 
 Configure in `appsettings.json` (`SymbolServer` section).
 
+### HTTP / HTTPS
+
+HTTP is the default everywhere; HTTPS is opt-in. Local runs and deployed
+runs are configured independently, since a fixed `Kestrel:Endpoints` entry
+in the base `appsettings.json` would otherwise silently win over
+`ASPNETCORE_URLS`/launch profiles (Kestrel endpoint configuration takes
+precedence over `UseUrls`/`ASPNETCORE_URLS` once any endpoint is
+configured):
+
+- **Local (`dotnet run`, `ASPNETCORE_ENVIRONMENT=Development`)** — driven
+  by `Properties/launchSettings.json`, which defines the `http` profile
+  (default, `http://localhost:5000`) and an `https` profile
+  (`https://localhost:5001;http://localhost:5000`). Opt into HTTPS with
+  `dotnet run --project src/Arbor.Symbols.Server --launch-profile https`.
+  Via the Aspire AppHost, set `ARBOR_SYMBOLS_LAUNCH_PROFILE=https` before
+  running it (see `src/Arbor.Symbols.AppHost/Program.cs` — `--launch-profile`
+  only applies to the AppHost project itself, which has no launch profiles
+  of its own).
+
+- **Deployed (published app, Windows Service, any environment other than
+  Development)** — driven by `appsettings.Production.json`, which sets a
+  `Kestrel:Endpoints:Http` default of `http://0.0.0.0:5000`. Add an
+  `Https` entry there (or override via the `Kestrel__Endpoints__Https__Url`
+  environment variable) to opt into HTTPS:
+
+  ```json
+  "Kestrel": {
+    "Endpoints": {
+      "Http": { "Url": "http://0.0.0.0:5000" },
+      "Https": { "Url": "https://0.0.0.0:5001" }
+    }
+  }
+  ```
+
+### Windows Service (opt-in)
+
+The server can run as a Windows Service — it's opt-in: `Program.cs` calls
+`UseWindowsService()`, which is a no-op unless the process is actually
+started by the Service Control Manager, so `dotnet run` / a normal console
+launch is unaffected.
+
+1. Publish a Windows-targeted, framework-dependent build (needs the
+   [.NET 10 runtime](https://dotnet.microsoft.com/download/dotnet/10.0) on
+   the target machine, produces a native `Arbor.Symbols.Server.exe`):
+
+   ```powershell
+   dotnet publish src\Arbor.Symbols.Server\Arbor.Symbols.Server.csproj `
+     --configuration Release --runtime win-x64 --self-contained false
+   ```
+
+2. Register and start the service (elevated PowerShell):
+
+   ```powershell
+   scripts\windows-service.ps1 -Install -ExePath <path>\Arbor.Symbols.Server.exe
+   ```
+
+   Uninstall with `scripts\windows-service.ps1 -Uninstall`. Under the hood
+   this just wraps `sc.exe create`/`sc.exe delete`; a service-hosted process
+   has no `ASPNETCORE_ENVIRONMENT=Development` from launch profiles, so it
+   picks up `appsettings.Production.json`'s HTTP default automatically (see
+   above).
+
 ## Arbor.Symbols.ConsoleClient
 
 Scans a local directory for `.dll`, `.exe`, and `.pdb`, creates debugger-compatible symbol requests, downloads from Arbor.Symbols.Server, and stores symbols in Visual Studio symbol-cache structure:
@@ -73,3 +135,24 @@ The client logs download status using Serilog.
 dotnet build Arbor.Symbols.slnx
 dotnet test Arbor.Symbols.slnx
 ```
+
+Package versions are centrally managed in `Directory.Packages.props` (NuGet
+Central Package Management); project files reference packages without a
+version. Build/publish output is written under `artifacts/` (MSBuild
+[artifacts output layout](https://learn.microsoft.com/dotnet/core/sdk/artifacts-output)),
+not per-project `bin`/`obj`.
+
+## Release artifacts
+
+```bash
+scripts/release.sh [version]
+```
+
+Builds `Arbor.Symbols.Server` and `Arbor.Symbols.ConsoleClient` in Release
+and publishes each as a **framework-dependent, portable** deployment (no
+runtime identifier, no bundled runtime) into `artifacts/release/`, one
+`.zip` (or `.tar.gz` if `zip` isn't available) plus a `.sha256` checksum per
+project. The resulting archive can be copied to any machine with the
+matching [.NET 10 runtime](https://dotnet.microsoft.com/download/dotnet/10.0)
+installed and run with `dotnet <Project>.dll` — no SDK required on the
+target machine.

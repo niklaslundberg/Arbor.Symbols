@@ -27,9 +27,10 @@ jobs:
           dotnet test Arbor.Symbols.slnx
           --configuration Release
           --no-build
-          --collect:"XPlat Code Coverage"
-          --logger "trx"
           --results-directory TestResults
+          --report-trx
+          --coverlet
+          --coverlet-output-format cobertura
 
       - name: Publish test report
         uses: dorny/test-reporter@v1

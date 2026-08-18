@@ -71,13 +71,25 @@ This file contains license and attribution notices for third-party packages used
 
 ---
 
-## coverlet.collector
+## coverlet.mtp
 
-**Package:** coverlet.collector
-**Version:** 10.0.0
+**Package:** coverlet.mtp
+**Version:** 10.0.1
 **Authors:** coverlet contributors
 **Copyright:** Copyright © coverlet contributors
 **Project URL:** https://github.com/coverlet-coverage/coverlet
+**License:** MIT
+**Note:** Test-only dependency; not redistributed.
+
+---
+
+## Microsoft.Testing.Extensions.TrxReport
+
+**Package:** Microsoft.Testing.Extensions.TrxReport
+**Version:** 2.3.3
+**Authors:** Microsoft
+**Copyright:** Copyright © Microsoft Corporation. All rights reserved.
+**Project URL:** https://github.com/microsoft/testfx
 **License:** MIT
 **Note:** Test-only dependency; not redistributed.
 
@@ -149,6 +161,17 @@ This file contains license and attribution notices for third-party packages used
 **Authors:** Microsoft
 **Copyright:** Copyright © Microsoft Corporation. All rights reserved.
 **Project URL:** https://github.com/dotnet/aspire
+**License:** MIT
+
+---
+
+## Microsoft.Extensions.Hosting.WindowsServices
+
+**Package:** Microsoft.Extensions.Hosting.WindowsServices
+**Version:** 10.0.11
+**Authors:** Microsoft
+**Copyright:** Copyright © Microsoft Corporation. All rights reserved.
+**Project URL:** https://github.com/dotnet/runtime
 **License:** MIT
 
 ---
