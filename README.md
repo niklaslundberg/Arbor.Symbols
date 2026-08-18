@@ -118,6 +118,11 @@ Default symbol-cache location:
 - Windows: `%LOCALAPPDATA%\\Temp\\SymbolCache`
 - Linux/macOS: `~/.vs/symbols`
 
+Run `dotnet run --project src/Arbor.Symbols.ConsoleClient -- --help` for full,
+self-contained usage documentation (options, defaults, exit codes, examples)
+— it's kept in the tool itself so both humans and AI agents can discover it
+without reading source.
+
 ### Run
 
 ```bash
@@ -126,6 +131,29 @@ dotnet run --project src/Arbor.Symbols.ConsoleClient/Arbor.Symbols.ConsoleClient
   --server http://localhost:5000 \
   --symbol-cache /path/to/symbol-cache
 ```
+
+### Options
+
+| Option | Description | Default |
+| --- | --- | --- |
+| `--server <url>` | Base URL of `Arbor.Symbols.Server`. | `http://localhost:5000` |
+| `--symbol-cache <path>` | Destination symbol cache directory. | OS default, see above |
+| `--force` | Re-download and overwrite files already present in the cache. | off |
+| `--dry-run` | Report what would be downloaded without contacting the server or writing files. | off |
+| `--max-concurrency <n>` | Number of symbol requests to run in parallel. | `8` |
+| `--include <glob>` | Only scan files matching this glob (repeatable). | `**/*.dll`, `**/*.exe`, `**/*.pdb` |
+| `--exclude <glob>` | Skip files matching this glob (repeatable, applied after `--include`). | none |
+| `-h`, `--help` | Print usage and exit. | — |
+
+Downloads run concurrently (bounded by `--max-concurrency`) and already-cached
+files are skipped unless `--force` is set. Outbound HTTP calls to the server
+use the same standard `Microsoft.Extensions.Http.Resilience` (Polly-based)
+pipeline as the rest of the solution — automatic retry with backoff, a
+request timeout, and a circuit breaker — so transient network issues are
+retried automatically; 404 "symbol not found" responses are not retried.
+
+Exit codes: `0` success, `1` invalid arguments, `2` scan directory not found,
+`3` completed with one or more failed downloads, `130` cancelled (Ctrl+C).
 
 The client logs download status using Serilog.
 
