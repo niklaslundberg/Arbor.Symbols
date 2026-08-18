@@ -53,18 +53,19 @@ checksum() {
 
 for project in "${projects[@]}"; do
   project_name="$(basename "$project" .csproj)"
+  publish_output="$publish_root/$project_name"
   echo "==> Publishing $project_name (framework-dependent, no RID)"
 
+  rm -rf "$publish_output"
+
+  # An explicit --output bypasses the artifacts-output layout's pivoted
+  # publish directory, so the archive step below always packages exactly
+  # what was just published, deterministically.
   dotnet publish "$project" \
     --configuration "$configuration" \
     --no-self-contained \
-    --no-restore
-
-  publish_output="$(find "$publish_root/$project_name" -mindepth 1 -maxdepth 1 -type d 2>/dev/null | head -n1)"
-  if [[ -z "$publish_output" ]]; then
-    echo "error: could not locate publish output for $project_name under $publish_root/$project_name" >&2
-    exit 1
-  fi
+    --no-restore \
+    --output "$publish_output"
 
   cat > "$publish_output/RUN.txt" <<EOF
 $project_name - portable release ($version)
@@ -76,7 +77,7 @@ Run:
   dotnet $project_name.dll
 
 $project_name defaults to plain HTTP. HTTPS is optional; see the README for
-how to enable it (Kestrel "Https" endpoint or ASPNETCORE_URLS).
+how to enable it (add a Kestrel "Https" endpoint in appsettings.Production.json).
 EOF
 
   archive_stem="${project_name}-${version}-portable"

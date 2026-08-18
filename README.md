@@ -47,23 +47,37 @@ Configure in `appsettings.json` (`SymbolServer` section).
 
 ### HTTP / HTTPS
 
-The server listens on plain HTTP by default (`http://0.0.0.0:5000`, see the
-`Kestrel:Endpoints:Http` section in `appsettings.json`). HTTPS is optional —
-add an `Https` endpoint to enable it:
+HTTP is the default everywhere; HTTPS is opt-in. Local runs and deployed
+runs are configured independently, since a fixed `Kestrel:Endpoints` entry
+in the base `appsettings.json` would otherwise silently win over
+`ASPNETCORE_URLS`/launch profiles (Kestrel endpoint configuration takes
+precedence over `UseUrls`/`ASPNETCORE_URLS` once any endpoint is
+configured):
 
-```json
-"Kestrel": {
-  "Endpoints": {
-    "Http": { "Url": "http://0.0.0.0:5000" },
-    "Https": { "Url": "https://0.0.0.0:5001" }
+- **Local (`dotnet run`, `ASPNETCORE_ENVIRONMENT=Development`)** — driven
+  by `Properties/launchSettings.json`, which defines the `http` profile
+  (default, `http://localhost:5000`) and an `https` profile
+  (`https://localhost:5001;http://localhost:5000`). Opt into HTTPS with
+  `dotnet run --project src/Arbor.Symbols.Server --launch-profile https`.
+  Via the Aspire AppHost, set `ARBOR_SYMBOLS_LAUNCH_PROFILE=https` before
+  running it (see `src/Arbor.Symbols.AppHost/Program.cs` — `--launch-profile`
+  only applies to the AppHost project itself, which has no launch profiles
+  of its own).
+
+- **Deployed (published app, Windows Service, any environment other than
+  Development)** — driven by `appsettings.Production.json`, which sets a
+  `Kestrel:Endpoints:Http` default of `http://0.0.0.0:5000`. Add an
+  `Https` entry there (or override via the `Kestrel__Endpoints__Https__Url`
+  environment variable) to opt into HTTPS:
+
+  ```json
+  "Kestrel": {
+    "Endpoints": {
+      "Http": { "Url": "http://0.0.0.0:5000" },
+      "Https": { "Url": "https://0.0.0.0:5001" }
+    }
   }
-}
-```
-
-or set the `ASPNETCORE_URLS` environment variable, e.g.
-`ASPNETCORE_URLS=http://0.0.0.0:5000;https://0.0.0.0:5001`. Locally,
-`dotnet run` uses the `http` launch profile by default (`--launch-profile
-https` to opt into HTTPS); the Aspire AppHost does the same.
+  ```
 
 ### Windows Service (opt-in)
 
@@ -88,9 +102,10 @@ launch is unaffected.
    ```
 
    Uninstall with `scripts\windows-service.ps1 -Uninstall`. Under the hood
-   this just wraps `sc.exe create`/`sc.exe delete`; service-managed
-   processes have no console, so make sure `appsettings.json` (or
-   `ASPNETCORE_URLS`) sets an explicit HTTP(S) endpoint as shown above.
+   this just wraps `sc.exe create`/`sc.exe delete`; a service-hosted process
+   has no `ASPNETCORE_ENVIRONMENT=Development` from launch profiles, so it
+   picks up `appsettings.Production.json`'s HTTP default automatically (see
+   above).
 
 ## Arbor.Symbols.ConsoleClient
 
