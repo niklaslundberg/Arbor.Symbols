@@ -22,6 +22,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\src\Arbor.Symbols.ConsoleClient\Arbor.Symbols.ConsoleClient.csproj" />
     <ProjectReference Include="..\..\src\Arbor.Symbols.Core\Arbor.Symbols.Core.csproj" />
   </ItemGroup>
 
