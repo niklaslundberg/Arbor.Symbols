@@ -106,7 +106,7 @@ public class SymbolRequestHandlerTests
     {
         var context = new DefaultHttpContext
         {
-            RequestServices = new ServiceCollection().BuildServiceProvider(),
+            RequestServices = new ServiceCollection().AddLogging().BuildServiceProvider(),
             Response = { Body = new MemoryStream() }
         };
 
