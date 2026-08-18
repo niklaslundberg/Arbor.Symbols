@@ -22,7 +22,10 @@ public static class SymbolPrefetcher
 
         var parallelOptions = new ParallelOptions
         {
-            MaxDegreeOfParallelism = maxConcurrency,
+            // CliOptions already rejects < 1 for the CLI's own --max-concurrency, but this
+            // is a public API any caller can invoke directly, and ParallelOptions itself
+            // throws for 0/negative — clamp defensively rather than propagate that.
+            MaxDegreeOfParallelism = Math.Max(1, maxConcurrency),
             CancellationToken = cancellationToken
         };
 

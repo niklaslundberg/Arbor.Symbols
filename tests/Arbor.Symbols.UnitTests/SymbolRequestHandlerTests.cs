@@ -65,12 +65,13 @@ public class SymbolRequestHandlerTests
         statistics.NotFound.Should().Be(1);
     }
 
-    [Fact]
-    public async Task HandleAsync_PathEscapesCacheRoot_ReturnsBadRequestInsteadOfThrowing()
+    [Theory]
+    [InlineData("..", "ABCDEF1234", "my.pdb")]
+    [InlineData("my.pdb", "..", "my.pdb")]
+    [InlineData("my.pdb", "ABCDEF1234", "..")]
+    public async Task HandleAsync_PathEscapesCacheRoot_ReturnsBadRequestInsteadOfThrowing(
+        string requestedFileName, string identifier, string resourceFileName)
     {
-        // Only a ".." in the *first* (requestedFileName) segment walks the resolved
-        // path above the cache root (see SymbolResourcePathHelperTests) — that's the
-        // one case SymbolStorage's GetPath surfaces as InvalidOperationException.
         var storage = new SymbolStorage(new SymbolServerOptions
         {
             CacheDirectory = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"))
@@ -80,7 +81,7 @@ public class SymbolRequestHandlerTests
 
         var handler = CreateHandler(storage, officialClient, new FakeIlSpySymbolGenerator(false), statistics);
 
-        var result = await handler.HandleAsync("..", "ABCDEF1234", "my.pdb", TestContext.Current.CancellationToken);
+        var result = await handler.HandleAsync(requestedFileName, identifier, resourceFileName, TestContext.Current.CancellationToken);
 
         var (statusCode, _) = await ExecuteAsync(result);
         statusCode.Should().Be(StatusCodes.Status400BadRequest);

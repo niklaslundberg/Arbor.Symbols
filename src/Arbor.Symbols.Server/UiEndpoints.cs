@@ -151,7 +151,7 @@ public static class UiEndpoints
         {
             return storage.TryDelete(request) ? Results.Ok() : Results.NotFound();
         }
-        catch (InvalidOperationException)
+        catch (Exception ex) when (ex is InvalidOperationException or ArgumentException or PathTooLongException or NotSupportedException)
         {
             return Results.BadRequest();
         }

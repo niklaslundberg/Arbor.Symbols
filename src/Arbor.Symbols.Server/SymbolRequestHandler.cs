@@ -36,8 +36,12 @@ public sealed class SymbolRequestHandler
         {
             return await HandleRequestAsync(request, resourceFileName, cancellationToken);
         }
-        catch (InvalidOperationException ex)
+        catch (Exception ex) when (ex is InvalidOperationException or ArgumentException or PathTooLongException or NotSupportedException)
         {
+            // InvalidOperationException is GetCachePath's own validation; the others are
+            // what the underlying Path/Directory/File APIs can throw for other malformed
+            // route values (e.g. invalid characters, an over-long path) that reach them
+            // before GetCachePath's own checks would catch them.
             _logger.LogWarning(ex, "Rejected invalid symbol request {RelativePath}", request.RelativePath);
             return Results.BadRequest();
         }

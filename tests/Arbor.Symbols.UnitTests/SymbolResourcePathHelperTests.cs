@@ -42,36 +42,27 @@ public class SymbolResourcePathHelperTests
         act.Should().Throw<InvalidOperationException>();
     }
 
-    [Fact]
-    public void GetCachePath_FirstSegmentIsDotDot_ThrowsEvenWithoutASeparatorCharacter()
+    [Theory]
+    [InlineData("..", "ABC123", "MyLib.pdb")]
+    [InlineData("MyLib.pdb", "..", "MyLib.pdb")]
+    [InlineData("MyLib.pdb", "ABC123", "..")]
+    [InlineData(".", "ABC123", "MyLib.pdb")]
+    [InlineData("MyLib.pdb", ".", "MyLib.pdb")]
+    [InlineData("MyLib.pdb", "ABC123", ".")]
+    public void GetCachePath_SegmentIsDotOrDotDot_Throws(string requestedFileName, string identifier, string resourceFileName)
     {
-        // ".." contains no path-separator character, so it slips past the separator
-        // check; the root-escape check must still catch it once the path is resolved.
-        // Only the *first* segment can actually walk above the root: it cancels the
-        // root directory itself, landing one level up.
-        var request = new SymbolResourceRequest("..", "ABC123", "MyLib.pdb");
+        // "." and ".." contain no path-separator character, so they slip past the
+        // separator check above. They're rejected explicitly rather than relying on
+        // the root-escape check below: only the *first* segment being ".." actually
+        // walks the resolved path above the root — ".." in the identifier or
+        // resourceFileName position just cancels the segment before it and still
+        // resolves under the root, which would otherwise let it slip through despite
+        // aliasing a shorter, unintended cache path.
+        var request = new SymbolResourceRequest(requestedFileName, identifier, resourceFileName);
         var root = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
 
         var act = () => SymbolResourcePathHelper.GetCachePath(root, request);
 
         act.Should().Throw<InvalidOperationException>();
-    }
-
-    [Theory]
-    [InlineData("MyLib.pdb", "..", "MyLib.pdb")]
-    [InlineData("MyLib.pdb", "ABC123", "..")]
-    public void GetCachePath_MiddleOrLastSegmentIsDotDot_StaysUnderRootAndDoesNotThrow(
-        string requestedFileName, string identifier, string resourceFileName)
-    {
-        // A ".." in the identifier or resourceFileName position only cancels the
-        // segment immediately before it (requestedFileName or identifier, which is
-        // always present), so the resolved path never walks above the root — it just
-        // collapses to a shorter-than-expected path still inside it. Not a traversal.
-        var request = new SymbolResourceRequest(requestedFileName, identifier, resourceFileName);
-        var root = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
-
-        var path = SymbolResourcePathHelper.GetCachePath(root, request);
-
-        Path.GetFullPath(path).Should().StartWithEquivalentOf(Path.GetFullPath(root));
     }
 }

@@ -59,6 +59,17 @@ This file contains license and attribution notices for third-party packages used
 
 ---
 
+## Serilog.Sinks.File
+
+**Package:** Serilog.Sinks.File
+**Version:** 7.0.0
+**Authors:** Serilog Contributors
+**Copyright:** Copyright © Serilog Contributors
+**Project URL:** https://github.com/serilog/serilog-sinks-file
+**License:** Apache-2.0
+
+---
+
 ## AwesomeAssertions
 
 **Package:** AwesomeAssertions

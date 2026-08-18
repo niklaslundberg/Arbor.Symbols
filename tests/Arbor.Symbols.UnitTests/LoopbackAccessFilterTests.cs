@@ -6,9 +6,10 @@ namespace Arbor.Symbols.UnitTests;
 public class LoopbackAccessFilterTests
 {
     [Fact]
-    public void IsAllowed_NullAddress_ReturnsTrue()
+    public void IsAllowed_NullAddress_ReturnsFalse()
     {
-        LoopbackAccessFilter.IsAllowed(null).Should().BeTrue();
+        // Fails closed: an unknown remote address is not trusted by default.
+        LoopbackAccessFilter.IsAllowed(null).Should().BeFalse();
     }
 
     [Theory]

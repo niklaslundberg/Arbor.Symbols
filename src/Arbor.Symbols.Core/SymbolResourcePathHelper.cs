@@ -117,6 +117,18 @@ public static class SymbolResourcePathHelper
             throw new InvalidOperationException("Symbol request components must not contain path separators.");
         }
 
+        // Reject "." / ".." outright rather than relying solely on the root-escape check
+        // below: a ".." in the identifier or resourceFileName position doesn't walk above
+        // the root (it just cancels the segment before it), but it does collapse the path
+        // to something shorter than the intended 3-level structure — which could alias a
+        // different, unrelated cache entry rather than merely "staying safely inside root".
+        if (request.RequestedFileName is "." or ".." ||
+            request.Identifier is "." or ".." ||
+            request.ResourceFileName is "." or "..")
+        {
+            throw new InvalidOperationException("Symbol request components must not be '.' or '..'.");
+        }
+
         Directory.CreateDirectory(cacheRootDirectory);
 
         var fullRoot = Path.GetFullPath(cacheRootDirectory);
