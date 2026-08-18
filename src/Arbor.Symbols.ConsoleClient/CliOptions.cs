@@ -14,7 +14,7 @@ public sealed record CliOptions(
 
     public static CliParseResult Parse(string[] args, string defaultServerUrl, string defaultCacheDirectory)
     {
-        if (args.Any(static a => a is "--help" or "-h" or "-?"))
+        if (args.Any(static a => a is "--help" or "-h"))
         {
             return CliParseResult.Help();
         }

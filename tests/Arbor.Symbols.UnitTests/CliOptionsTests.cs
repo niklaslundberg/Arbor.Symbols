@@ -29,6 +29,14 @@ public class CliOptionsTests
     }
 
     [Fact]
+    public void Parse_WithQuestionMarkFlag_IsNotTreatedAsHelp()
+    {
+        var result = CliOptions.Parse(["-?"], DefaultServerUrl, DefaultCacheDirectory);
+
+        result.HelpRequested.Should().BeFalse();
+    }
+
+    [Fact]
     public void Parse_WithOnlyScanDirectory_UsesDefaults()
     {
         var result = CliOptions.Parse(["/scan"], DefaultServerUrl, DefaultCacheDirectory);

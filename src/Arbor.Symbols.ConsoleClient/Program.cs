@@ -99,10 +99,24 @@ try
                 Directory.CreateDirectory(destinationDirectory);
             }
 
-            await using (var destination = File.Create(destinationPath))
-            await using (var source = await response.Content.ReadAsStreamAsync(cancellationToken))
+            // Download to a temp file and rename into place so an interrupted copy
+            // (exception/cancellation/process exit) can never leave a partial file
+            // at destinationPath, which a later run would otherwise treat as cached.
+            var temporaryPath = Path.Combine(destinationDirectory ?? string.Empty, $"{Path.GetFileName(destinationPath)}.{Guid.NewGuid():N}.download");
+
+            try
             {
-                await source.CopyToAsync(destination, cancellationToken);
+                await using (var destination = File.Create(temporaryPath))
+                await using (var source = await response.Content.ReadAsStreamAsync(cancellationToken))
+                {
+                    await source.CopyToAsync(destination, cancellationToken);
+                }
+
+                File.Move(temporaryPath, destinationPath, overwrite: true);
+            }
+            finally
+            {
+                File.Delete(temporaryPath);
             }
 
             Interlocked.Increment(ref downloaded);

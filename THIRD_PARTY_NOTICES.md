@@ -165,6 +165,28 @@ This file contains license and attribution notices for third-party packages used
 
 ---
 
+## Microsoft.Extensions.DependencyInjection
+
+**Package:** Microsoft.Extensions.DependencyInjection
+**Version:** 10.0.11
+**Authors:** Microsoft
+**Copyright:** Copyright © Microsoft Corporation. All rights reserved.
+**Project URL:** https://github.com/dotnet/runtime
+**License:** MIT
+
+---
+
+## Microsoft.Extensions.FileSystemGlobbing
+
+**Package:** Microsoft.Extensions.FileSystemGlobbing
+**Version:** 10.0.11
+**Authors:** Microsoft
+**Copyright:** Copyright © Microsoft Corporation. All rights reserved.
+**Project URL:** https://github.com/dotnet/runtime
+**License:** MIT
+
+---
+
 ## Microsoft.Extensions.Hosting.WindowsServices
 
 **Package:** Microsoft.Extensions.Hosting.WindowsServices
@@ -179,7 +201,7 @@ This file contains license and attribution notices for third-party packages used
 ## Microsoft.Extensions.Http.Resilience
 
 **Package:** Microsoft.Extensions.Http.Resilience
-**Version:** 10.5.0
+**Version:** 10.9.0
 **Authors:** Microsoft
 **Copyright:** Copyright © Microsoft Corporation. All rights reserved.
 **Project URL:** https://github.com/dotnet/extensions
@@ -190,7 +212,7 @@ This file contains license and attribution notices for third-party packages used
 ## Microsoft.Extensions.ServiceDiscovery
 
 **Package:** Microsoft.Extensions.ServiceDiscovery
-**Version:** 10.5.0
+**Version:** 10.9.0
 **Authors:** Microsoft
 **Copyright:** Copyright © Microsoft Corporation. All rights reserved.
 **Project URL:** https://github.com/dotnet/extensions
