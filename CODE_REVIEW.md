@@ -292,3 +292,198 @@ happens. The concurrent cache-write race (§3) is the one correctness issue
 worth fixing regardless of deployment target, since it can silently corrupt
 cached symbols even in the trusted, single-user, local case the project
 targets today.
+
+## 8. Suggested remediation tasks
+
+Each task below is scoped to be a single, self-contained PR: one concern, a
+concrete set of files, and a clear "done" condition. Ordered by priority
+within each group; groups are independent of each other.
+
+### P0 — Correctness (fix regardless of deployment target)
+
+1. **Make `SymbolStorage.SaveAsync` write atomically.**
+   *Files:* `src/Arbor.Symbols.Server/SymbolStorage.cs`.
+   Write to a temp file in the same directory (e.g.
+   `{destination}.{Guid}.tmp`) and `File.Move(..., overwrite: true)` into
+   place, mirroring the pattern already used in
+   `src/Arbor.Symbols.ConsoleClient/Program.cs:102-120`. Delete the temp file
+   in a `finally` on failure.
+   *Done when:* two concurrent `SaveAsync` calls for the same request never
+   leave a truncated/interleaved file at the destination, and a new
+   regression test (see task 6) passes.
+
+2. **Catch path-validation failures and return 400 instead of 500.**
+   *Files:* `src/Arbor.Symbols.Server/SymbolRequestHandler.cs`,
+   `src/Arbor.Symbols.Server/UiEndpoints.cs`.
+   Wrap the call sites that invoke `SymbolStorage`/`SymbolResourcePathHelper`
+   (or catch inside `SymbolStorage`) and translate the existing
+   `InvalidOperationException` from `GetCachePath` into
+   `Results.BadRequest()`. Don't change `GetCachePath`'s own validation logic.
+   *Done when:* a request with a `..`-style segment gets a `400`, not an
+   unhandled-exception `500`.
+
+### P1 — Server robustness under load
+
+3. **Bound and offload ILSpy PDB generation.**
+   *Files:* `src/Arbor.Symbols.Server/IlSpySymbolGenerator.cs`,
+   `src/Arbor.Symbols.Server/Program.cs` (DI registration).
+   Run the synchronous decompile/write body on a dedicated worker via
+   `Task.Run`, gated by a shared `SemaphoreSlim` (configurable max concurrent
+   generations, default e.g. 2) so it can no longer consume unbounded
+   thread-pool capacity or run unboundedly in parallel.
+   *Done when:* `TryGeneratePdbAsync` no longer runs synchronously on the
+   calling (request) thread, and concurrent generation requests beyond the
+   configured limit queue rather than all running at once.
+
+4. **Stream official downloads to disk instead of triple-buffering.**
+   *Files:* `src/Arbor.Symbols.Server/SymbolRequestHandler.cs`.
+   Save the official response stream directly via the existing (now-atomic,
+   per task 1) `SymbolStorage.SaveAsync`, then re-open and serve from disk
+   via `Results.Stream`/`SendFileAsync` — the same path already used for
+   cache hits — instead of materializing the payload into two `MemoryStream`s
+   and a `byte[]`.
+   *Done when:* no full-payload `byte[]`/extra `MemoryStream` remains in the
+   official-download path; existing integration tests
+   (`SymbolEndpointTests`) still pass unchanged.
+
+5. **Extract `ISymbolStorage` and unit-test `SymbolRequestHandler`.**
+   *Files:* new `src/Arbor.Symbols.Server/ISymbolStorage.cs`,
+   `SymbolStorage.cs` (implement it), `SymbolRequestHandler.cs`, `Program.cs`
+   (DI registration), new
+   `tests/Arbor.Symbols.UnitTests/SymbolRequestHandlerTests.cs`.
+   Add unit tests for the four branches (cache hit, official download, ILSpy
+   generation, not-found) using fakes for `ISymbolStorage`,
+   `IOfficialSymbolClient`, `IIlSpySymbolGenerator` — no `WebApplicationFactory`
+   needed.
+   *Done when:* `SymbolRequestHandler`'s branching logic has direct unit-test
+   coverage independent of the existing integration tests.
+
+### P2 — Test coverage gaps
+
+6. **Add tests for the cache-path traversal guard.**
+   *Files:* `tests/Arbor.Symbols.UnitTests/SymbolResourcePathHelperTests.cs`.
+   Add cases: a segment containing a path separator throws
+   `InvalidOperationException`; a segment of `".."` (no separator) still
+   throws because the resolved path escapes the root; a normal request
+   resolves under the root as expected (already covered).
+   *Done when:* all three cases are asserted; this also backs task 2's `400`
+   behavior with a lower-level guarantee.
+
+7. **Add unit tests for `SymbolStorage`.**
+   *Files:* new `tests/Arbor.Symbols.UnitTests/SymbolStorageTests.cs`.
+   Cover `GetCachedSymbols` (empty cache, populated cache, nested structure),
+   `GetDiskUsageBytes`, and `TryDelete` (missing entry, present entry, and
+   that emptied `identifier`/`fileName` directories are cleaned up but
+   non-empty ones are left alone).
+   *Done when:* these three methods have direct unit coverage instead of
+   only being exercised incidentally through `UiEndpointTests`.
+
+8. **Add unit tests for `OfficialSymbolClient`.**
+   *Files:* new `tests/Arbor.Symbols.UnitTests/OfficialSymbolClientTests.cs`
+   (using a mocked `HttpMessageHandler` or `Microsoft.Extensions.Http`
+   test helpers).
+   Cover: success response returns a stream, non-success status returns
+   `null`, and `HttpRequestException` is swallowed and returns `null`.
+   *Done when:* all three branches of `TryDownloadAsync` are covered.
+
+9. **Add a test proving the `/ui` loopback restriction actually rejects
+   non-loopback callers.**
+   *Files:* `tests/Arbor.Symbols.IntegrationTests/UiEndpointTests.cs` or a
+   new focused test file.
+   If simulating a non-loopback `RemoteIpAddress` through
+   `WebApplicationFactory`/`TestServer` proves impractical, extract the
+   filter's decision (`IPAddress -> IResult?`) into a small testable function
+   and unit-test that directly instead.
+   *Done when:* there is an automated test that fails if the loopback check
+   is ever accidentally removed or weakened.
+
+10. **Extract the ConsoleClient download loop into a testable class.**
+    *Files:* `src/Arbor.Symbols.ConsoleClient/Program.cs` (extract to new
+    `SymbolPrefetcher.cs`), new
+    `tests/Arbor.Symbols.UnitTests/SymbolPrefetcherTests.cs`.
+    Move the `Parallel.ForEachAsync` download/skip/force/dry-run/atomic-write
+    body into a class with an injectable `HttpMessageHandler`/`HttpClient`,
+    returning a result with downloaded/skipped/failed counts (i.e. today's
+    exit-code inputs). Keep `Program.cs` as thin argument-parsing +
+    exit-code glue.
+    *Done when:* `--force`, `--dry-run`, skip-if-cached, and the atomic
+    temp-file-then-rename behavior are each covered by a unit test that
+    doesn't require a running server.
+
+### P3 — Production readiness (do based on deployment intent)
+
+11. **Make health checks available outside Development, or document why not.**
+    *Files:* `src/Arbor.Symbols.ServiceDefaults/Extensions.cs`.
+    Either drop the `IsDevelopment()` guard around `MapHealthChecks` (typical
+    for orchestrator liveness/readiness probes), or — if the guard is
+    intentional — add a one-line comment explaining why health endpoints are
+    deliberately Development-only, plus a README note for anyone deploying
+    behind an orchestrator.
+    *Done when:* either the endpoints are reachable in Production, or the
+    intentional-Development-only design is documented in both the code and
+    the README.
+
+12. **Decide and document the trust boundary for the download endpoints.**
+    *Files:* `README.md`, optionally
+    `src/Arbor.Symbols.Server/Program.cs`.
+    At minimum, add a README statement that the server is intended to run on
+    a trusted internal network with no built-in auth/rate limiting on the
+    download/generation endpoints. If broader exposure is a real scenario,
+    follow up with rate limiting (ASP.NET Core's built-in
+    `Microsoft.AspNetCore.RateLimiting` middleware is a low-effort fit) on
+    the `.pdb`-generation path specifically, since that's the CPU-expensive
+    one.
+    *Done when:* the trust assumption is explicit in the README, or rate
+    limiting is in place if the assumption doesn't hold.
+
+13. **Add a cache eviction policy, or document that cleanup is manual-only.**
+    *Files:* `src/Arbor.Symbols.Server/SymbolServerOptions.cs`,
+    `SymbolStorage.cs`, `README.md`.
+    Either add an opt-in size/age-based eviction (e.g. a `MaxCacheSizeBytes`
+    option checked on `SaveAsync`, evicting oldest-by-`LastWriteTimeUtc`
+    first), or explicitly document in the README that disk usage is
+    unbounded and the `/ui` delete action is currently the only cleanup
+    mechanism.
+    *Done when:* either eviction exists and is covered by a test, or the
+    README carries an explicit "unbounded cache, manual cleanup only"
+    statement under Server behavior.
+
+14. **Give the Windows Service hosting mode a durable log sink.**
+    *Files:* `src/Arbor.Symbols.Server/Program.cs`,
+    `appsettings.Production.json`.
+    Add a file sink (e.g. `Serilog.Sinks.File`) or Windows Event Log sink,
+    at least when running under `UseWindowsService()`, so service-hosted logs
+    aren't silently dropped by the console-only sink.
+    *Done when:* running the published app as a Windows Service (per the
+    README's existing instructions) produces log output somewhere durable
+    on disk or in Event Viewer.
+
+### P4 — CI / tooling
+
+15. **Add a `windows-latest` leg to CI.**
+    *Files:* `.github/workflows/ci.yml`.
+    Build and test on `windows-latest` alongside the existing
+    `ubuntu-latest` job (matrix build), so `UseWindowsService`,
+    `SymbolCacheLocator`'s Windows branch, and `scripts/windows-service.ps1`
+    are exercised by CI.
+    *Done when:* CI runs the full test suite on both operating systems and
+    is green on both.
+
+16. **Add dependency vulnerability scanning to CI.**
+    *Files:* `.github/workflows/ci.yml`.
+    Add a step running `dotnet list package --vulnerable --include-transitive`
+    (failing the build on results) or enable Dependabot/CodeQL for the repo.
+    *Done when:* CI fails if a known-vulnerable package version is
+    introduced.
+
+17. **Enforce formatting in CI.**
+    *Files:* `.github/workflows/ci.yml`.
+    Add a `dotnet format --verify-no-changes` step. Given
+    `TreatWarningsAsErrors` is already solution-wide, this closes the
+    remaining style-consistency gap cheaply.
+    *Done when:* CI fails on unformatted code.
+
+Tasks 1–10 are the ones worth doing regardless of how this project is used
+going forward; 11–14 depend on whether it's meant to run as a longer-lived
+service beyond a single trusted dev machine, and 15–17 are cheap CI
+hardening with no design decisions attached.
